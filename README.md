@@ -32,6 +32,18 @@ __6. Install required python packages__ \
 pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph PyQt5 PyOpenGL trimesh
 ```
 
-# Data Prepare
-1. Download the data in the google drive folder Flex to a local machine. 
-2. Create a symlink for the Flex and replace the empty Flex directory in the project.
+# Preparing the Data
+1. Download the data from the [Flex](https://drive.google.com/drive/folders/1_sBEdKRCD9kbCbINUTYAecuz_H-ttwFB) google drive and save it on your local computer.
+
+2. Establish a symbolic link for the Flex data and substitute the existing empty Flex directory in the project using the guidance outlined in ./Flex/symlink.md.
+
+# Execution
+1. Initiate the environment by executing the following commands:
+```
+source ~/miniconda/bin/activate
+conda activate myenv
+```
+2. Launch the correction tool by running:
+```
+python 1.py
+```
