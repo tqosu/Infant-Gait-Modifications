@@ -37,10 +37,21 @@ pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph Py
 
 2. Establish a symbolic link for the Flex data and substitute the existing empty Flex directory in the project using the guidance outlined in ./Flex/symlink.md.
 
+3. Tips \
+3.1. Download all files excluding dataset and dataset2 \
+3.2. dataset folder \
+2021_Flex1_Sxx_SlopeProtractor.mp4 is needed. You may copy it from local, rename it and place it in the corresponding path. \
+3.3. dataset2 folder \ You may download the video you coded first.
+
 # Execution
+0. Terminal. \
+0.1. Open a terminal and change the current directory to the FLEX path, which has the 1.py file.
+```
+cd .../FLEX
+```
 1. Initiate the environment by executing the following commands:
 ```
-source ~/miniconda/bin/activate
+source ~/miniconda3/bin/activate
 conda activate myenv
 ```
 2. Launch the correction tool by running:
