@@ -1,0 +1,11 @@
+1. Launch the terminal application.
+2. Navigate to the directory created by
+```
+
+```
+Remove the directory named "Flex" along with its accompanying readme file.
+Generate a symbolic link using the following command:
+
+```
+ln -s path_of_your_download_Flex .
+```
