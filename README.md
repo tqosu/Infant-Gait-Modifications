@@ -29,7 +29,7 @@ __6. Install required python packages__ \
 6.2 open terminal with step 5
 
 ```
-pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph PyQt5 PyOpenGL trimesh
+pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph PyQt5 PyOpenGL trimesh pandas
 ```
 
 # Preparing the Data
