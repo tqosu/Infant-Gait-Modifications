@@ -1,4 +1,4 @@
-import DevEv1
+import FlexUI
 
 # import argparse
 # parser = argparse.ArgumentParser()
@@ -10,5 +10,5 @@ import DevEv1
 
 def test_xjk():
     # print(args.filename)
-    DevEv1.run()
+    FlexUI.run()
 test_xjk()

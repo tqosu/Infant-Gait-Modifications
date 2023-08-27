@@ -7,8 +7,8 @@ from PyQt5.QtGui import QIcon, QIntValidator
 
 import sys,json,os
 # from DevEv1.Viewer3D.Viewer3DApp import View3D
-from DevEv1.ViewerVideo.VideoWidgetApp import VideoApp
-from DevEv1.ViewerVideo.ResultWidgetApp import ResultApp
+from FlexUI.ViewerVideo.VideoWidgetApp import VideoApp
+from FlexUI.ViewerVideo.ResultWidgetApp import ResultApp
 import pandas as pd
 from collections import defaultdict
 import numpy as np
