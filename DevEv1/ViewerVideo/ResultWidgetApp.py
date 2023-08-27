@@ -152,8 +152,9 @@ class ResultApp(QWidget):
     def SaveAction(self):
         mydata={}
         mydata['data']=self.data
+        # print(self.position)
         print('save_action')
-        np.save(self.mydict['path_data'], mydata, allow_pickle=True)
+        np.save(self.mydict['path_data_sv'], mydata, allow_pickle=True)
 
     def RemoveAction(self):
         if self.position in self.data:
@@ -161,23 +162,11 @@ class ResultApp(QWidget):
                 if key in self.data[self.position]:
                     self.data[self.position].pop(key)
         self.img1=self.gen_image()
-        self.myfoot.remove(self.position)
+        if self.position in self.myfoot:
+            self.myfoot.remove(self.position)
         for position in self.myfoot:
             self.setPosition1(position)
 
-        # thickness1=2
-        # for position in range(self.mydict['duration_on'],self.position):
-        #     if position in self.data:
-        #         for key in ['L','R']:
-        #             if key in self.data[position]:
-        #                 x,y,z=self.data[self.position][key]
-        #                 # print(x,y,z)
-        #                 y1,x1=(self.original_i+y)*self.rate,x*self.rate
-        #                 y1,x1=int(y1),int(x1)
-        #                 if key=='L':
-        #                     cv2.circle(self.img1,(y1,x1), self.radius, (255,0,0), thickness1)
-        #                 elif key=='R':
-        #                     cv2.circle(self.img1,(y1,x1), self.radius, (0,0,255), thickness1)
         img = cv2.vconcat([self.img, self.img1])
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)  
@@ -271,8 +260,8 @@ class ResultApp(QWidget):
             img [:,cur_y-1:cur_y+2,:]=(0,0,0)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
-        if position+1>=self.mydict['duration_off']:
-            self.SaveAction()
+        # if position+1==self.mydict['duration_off']:
+        #     self.SaveAction()
         
             # def draw_frame(self,f):
 

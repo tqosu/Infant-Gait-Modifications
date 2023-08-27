@@ -94,8 +94,11 @@ class VideoApp(QWidget):
     def stop_video(self):
         self.thread._run_flag = False
     
-    def start_video(self):
+    def start_video(self,S,D):
+        print("S {:.1f}, D {}".format(S,D))
         self.thread._run_flag = True
+        self.thread.S = S
+        self.thread.D = D
         self.thread.start()
     
     def closeEvent(self, event):

@@ -13,6 +13,7 @@ import pandas as pd
 from collections import defaultdict
 import numpy as np
 from functools import partial
+from pathlib import Path
 
 class VideoWindow(QMainWindow):
 
@@ -20,18 +21,12 @@ class VideoWindow(QMainWindow):
         a1,b1,c1,d1=string1.split(':')
         a,b,c,d=float(a1),float(b1),float(c1),float(d1)
         abc=a*360+b*60+c+d/1000
-        # print(a,b,c,abc)
-        # abc1=(a1+b1).zfill(4)
         return abc
-    # def init(self):
-    # def str2sec(self,string1):
-    #     a1,b1,c1=string1.split(':')
-    #     a,b,c=float(a1),float(b1),float(c1)
-    #     abc=a*60+b+c/1000
-    #     #abc1=(a1+b1).zfill(4)
-    #     return abc#,abc1
+  
     def user_combo_onActivated(self,text):
         self.user=text
+        self.slope_or_bridge=self.slbr_combo.currentText()
+        self.slbr_combo_onActivated(self.slope_or_bridge)
 
     def subject_combo_onActivated(self,text):
         self.subj=text
@@ -41,7 +36,6 @@ class VideoWindow(QMainWindow):
         set_a=set(self.dataframe['slope_or_bridge'].tolist())
         set_a=sorted(list(set_a))
         self.slbr_combo.clear()
-        # self.slbr_combo.addItem('')
         for sb in set_a:
             if sb =='s':
                 self.slbr_combo.addItem('Slope')
@@ -60,7 +54,9 @@ class VideoWindow(QMainWindow):
         # print(self.subj,slbr,text)
         info=[self.subj,'',slbr]
 
-        path3='./Flex/box5_2/2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
+        user_path='User/'+self.user_combo.currentText()+'/'
+        os.makedirs(user_path, exist_ok=True)
+        path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
         if os.path.isfile(path3):
             self.dataframe3=pd.read_csv(path3)
             self.dataframe3.set_index('total_trial_num', inplace=True)
@@ -70,8 +66,10 @@ class VideoWindow(QMainWindow):
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
 
+        print(path3)
         for idx in set_a:
             int_idx=int(idx)
+            # print(self.dataframe3.index)
             if int_idx in self.dataframe3.index:
                 print(self.dataframe3.loc[int_idx]['partial'])
                 if self.dataframe3.loc[int_idx]['partial']==True:
@@ -84,12 +82,12 @@ class VideoWindow(QMainWindow):
                 # self.mydict['angle']=-1
             self.trnu_combo.addItem(padding+str(idx).zfill(2))
 
-        # print(self.slope_or_bridge)
-
-
-
-
+    # path3 is always user's
+    # path2 change to user's when saving 
+    # path1 is the offset doesn't matter
     def trnu_combo_onActivated(self,text):
+        user_path='User/'+self.user_combo.currentText()+'/'
+
         text=text[1:]
         slbr=self.slbr_combo.currentText()
         # self.slbr_combo_onActivated(slbr)
@@ -112,14 +110,19 @@ class VideoWindow(QMainWindow):
         # print(data1)
         offset=data1['start_time_seconds']
 
-        path2='./Flex/box5_2/2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
-        path3='./Flex/box5_2/2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
+        pathdata='2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
+        path2='./Flex/box5_2/'+pathdata
+        path2sv=user_path+pathdata
+        
+        os.makedirs(user_path, exist_ok=True)
+        path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
 
         data=np.load(path2, allow_pickle=True)
         data=data.item()['data']
 
         int_idx=int(text)
         if int_idx in self.dataframe3.index:
+            path2=path2sv
             self.mydict['angle']=self.dataframe3.loc[int_idx]['angle']
             if self.mydict['angle']!=-1:
                 angle_str=str(self.mydict['angle'])
@@ -143,26 +146,19 @@ class VideoWindow(QMainWindow):
         self.mydict['data']=data
         self.mydict['path_json']=path1
         self.mydict['path_data']=path2
+        self.mydict['path_data_sv']=path2sv
         self.mydict['subj']=int(self.subject_combo.currentText()[1:])
         self.mydict['usr']=self.user_combo.currentText()
         self.mydict['slbr']=slbr
         self.mydict['trnu']=text
         self.mydict['path_csv']=path3
-        # self.mydict={'filename':fileName,'filename1':fileName1,
-        #          'on':on, 'off': off, 
-        #         'data':data, 'path_json': path1, 'path_data' : path2,
-        #         'slbr':slbr,'trnu':text[1:], 'path_csv':path3}
+        self.mydict['user_path']=user_path
+
         self.setFile()
         if not self.mediaPlayer.isVisible():
             self.mediaPlayer.show()
-       
-        './Flex/box5_1/2021_Flex1_S17_Bridge_MCH-01.npy'
-        './Flex/dataset2/2021_Flex1_{}_Bridge_MCH.mp4'
-    # def ProtractorAction(self):
-    #     if self.ProtractorAction.isChecked() == True:
-    #         self.viewAction=[5]
-    #     else:
-    #         self.viewAction=[0]
+        # self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+
 
     def prepare_trials(self):
         # self.dataframe=pd.read_csv('Flex.csv')
@@ -210,23 +206,34 @@ class VideoWindow(QMainWindow):
         self.LeftButton.setEnabled(True)
         self.LeftButton.resize(10,3)
         self.LeftButton.setIcon(QIcon('./icons/LeftButton.png'))
-        self.LeftButton.setShortcut(Qt.Key_Up)
+        self.LeftButton.enterEvent=lambda event: self.show_message("New Left Foot | Key_0")
+        self.LeftButton.leaveEvent = self.clear_message
+        self.LeftButton.setShortcut(Qt.Key_0)
+        
         self.LeftButton.clicked.connect(self.LeftAction)
 
         self.RightButton = QPushButton("&Right", self)
         self.RightButton.setEnabled(True)
         self.RightButton.setIcon(QIcon('./icons/RightButton.png'))
-        self.RightButton.setShortcut(Qt.Key_Down)
+        self.RightButton.setShortcut(Qt.Key_Enter)
+        self.RightButton.enterEvent=lambda event: self.show_message("New Right Foot | Key_Enter")
+        self.RightButton.leaveEvent = self.clear_message
         self.RightButton.clicked.connect(self.RightAction)
 
         self.PrevButton = QPushButton("&Prev", self)
         self.PrevButton.setEnabled(True)
         self.PrevButton.setIcon(QIcon('./icons/PrevButton.png'))
+        self.PrevButton.setShortcut(Qt.Key_Left)
+        self.PrevButton.enterEvent=lambda event: self.show_message("Previous Step | Key_Left")
+        self.PrevButton.leaveEvent = self.clear_message
         self.PrevButton.clicked.connect(self.PrevAction)
 
         self.NextButton = QPushButton("&Next", self)
         self.NextButton.setEnabled(True)
         self.NextButton.setIcon(QIcon('./icons/NextButton.png'))
+        self.NextButton.setShortcut(Qt.Key_Right)
+        self.NextButton.enterEvent=lambda event: self.show_message("Next Step | Key_Right")
+        self.NextButton.leaveEvent = self.clear_message
         self.NextButton.clicked.connect(self.NextAction)
 
 
@@ -234,6 +241,8 @@ class VideoWindow(QMainWindow):
         self.RemoveButton.setEnabled(True)
         self.RemoveButton.setIcon(QIcon('./icons/RemoveButton.png'))
         self.RemoveButton.setShortcut(Qt.Key_Delete)
+        self.RemoveButton.enterEvent=lambda event: self.show_message("Delete Step | Key_Delete")
+        self.RemoveButton.leaveEvent = self.clear_message
         self.RemoveButton.clicked.connect(self.RemoveAction)
 
         self.ClearButton = QPushButton("&Clear", self)
@@ -251,53 +260,70 @@ class VideoWindow(QMainWindow):
         self.PSaveButton.setIcon(QIcon('./icons/PSaveButton.png'))
         self.PSaveButton.clicked.connect(partial(self.SaveAction,1))
 
-        self.SCButton = QPushButton("&Shortcuts", self)
-        self.SCButton.setEnabled(True)
-        self.SCButton.setIcon(QIcon('./icons/SCButton.png'))
-        self.SCButton.clicked.connect(self.SCAction)
+        # self.SCButton = QPushButton("&Shortcuts", self)
+        # self.SCButton.setEnabled(True)
+        # self.SCButton.setIcon(QIcon('./icons/SCButton.png'))
+        # self.SCButton.clicked.connect(self.SCAction)
 
-    def SCAction(self):
-        dlg = QMessageBox(self)
-        dlg.setWindowTitle("Shortcuts")
-        mysc=[]
-        # mysc.append('Key_Up')
-        # mysc.append('Key_Down')
-        key='001 Key_Left:'.ljust(20)
-        func='PlayBack - 5 frames'.ljust(50)
-        mysc.append(key+func)
+    # def SCAction(self):
+    #     dlg = QMessageBox(self)
+    #     dlg.setWindowTitle("Shortcuts")
+    #     mysc=[]
+    #     # mysc.append('Key_Up')
+    #     # mysc.append('Key_Down')
+    #     key='001 Key_Left:'.ljust(20)
+    #     func='PlayBack - 5 frames'.ljust(50)
+    #     mysc.append(key+func)
 
-        key='002 Key_Right:'.ljust(20)
-        func='PlayForward + 5 frames'.ljust(50)
-        mysc.append(key+func)
+    #     key='002 Key_Right:'.ljust(20)
+    #     func='PlayForward + 5 frames'.ljust(50)
+    #     mysc.append(key+func)
 
-        key='003 Key_Up:'.ljust(20)
-        func='Add A Left Step'.ljust(50)
-        mysc.append(key+func)
+    #     key='003 Key_Up:'.ljust(20)
+    #     func='Add A Left Step'.ljust(50)
+    #     mysc.append(key+func)
 
-        key='004 Key_Down:'.ljust(20)
-        func='Add A Right Step'.ljust(50)
-        mysc.append(key+func)
+    #     key='004 Key_Down:'.ljust(20)
+    #     func='Add A Right Step'.ljust(50)
+    #     mysc.append(key+func)
 
-        key='005 Key_Delete:'.ljust(20)
-        func='Delete Step'.ljust(50)
-        mysc.append(key+func)
+    #     key='005 Key_Delete:'.ljust(20)
+    #     func='Delete Step'.ljust(50)
+    #     mysc.append(key+func)
 
-        mystr='\n'.join(mysc)
-        dlg.setText(mystr)
-        button = dlg.exec()
+    #     mystr='\n'.join(mysc)
+    #     dlg.setText(mystr)
+    #     button = dlg.exec()
 
-    def SaveAction(self,paritial=0):
+    def update_trnu_combo(self,part):
+        text=self.trnu_combo.currentText()
+        index_to_replace=self.trnu_combo.currentIndex()
+        if part==0:
+            text='C'+text[1:]
+        elif part==1:
+            text='P'+text[1:]
+        else:
+            text=' '+text[1:]
+
+        if index_to_replace != -1:
+            self.trnu_combo.setItemText(index_to_replace, text)  # Replace the item text
+
+
+    def SaveAction(self,part=0):
+        self.sliderPause()
         mydict=self.mydict
         self.dataframe3.loc[int(self.mydict['trnu'])] =\
-            [mydict['subj'],mydict['slbr'],mydict['usr'], mydict['angle'],-1,-1,paritial]
-        print(self.mydict['path_csv'],paritial)
+            [mydict['subj'],mydict['slbr'],mydict['usr'], mydict['angle'],-1,-1,part]
+        print(self.mydict['path_csv'],part)
         self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
+        self.update_trnu_combo(part)
         self.main3Dviewer.SaveAction()
 
     def reset3D(self):
         self.main3Dviewer.reset()
     
     def TrialAction(self):
+        self.sliderPause()
         index = self.trnu_combo.currentIndex()
         total=self.trnu_combo.count()
         # print(index,total)
@@ -333,19 +359,27 @@ class VideoWindow(QMainWindow):
         # print("next end")
 
     def RemoveAction(self):
+        self.sliderPause()
         self.main3Dviewer.RemoveAction()
 
     def ClearAction(self):
+        self.sliderPause()
         self.main3Dviewer.ClearAction()
-        self.dataframe3.drop(self.mydict['trnu'], inplace=True)
+        if self.mydict['trnu'] in self.dataframe3:
+            self.dataframe3.drop(self.mydict['trnu'], inplace=True)
+        self.update_trnu_combo(-1)
 
     def setFile(self):
-        print("# location 1")
+        # print("# location 1")
+
         self.mediaPlayer.set_file(self.mydict)
         self.mydict['duration_on']=self.mediaPlayer.duration_on
         self.mydict['duration_off']=self.mediaPlayer.duration_off
         self.main3Dviewer.set_file(self.mydict)
         self.playButton.setEnabled(True)
+        self.playButtonS.setEnabled(True)
+        self.playButtonSR.setEnabled(True)
+        self.pauseButton.setEnabled(True)
         self.playBackButton.setEnabled(True)
         self.playBackButton1.setEnabled(True)
         self.playFrontButton.setEnabled(True)
@@ -364,6 +398,12 @@ class VideoWindow(QMainWindow):
             self.mydict['angle']=float(text)
             print('angle: '+text)
             self.main3Dviewer.set_file(self.mydict)
+
+    def show_message(self, message):
+        self.statusBar().showMessage(message)
+
+    def clear_message(self, event):
+        self.statusBar().clearMessage()
 
     def __init__(self):
         super(VideoWindow, self).__init__()
@@ -405,31 +445,66 @@ class VideoWindow(QMainWindow):
         # Button
         self.playButton = QPushButton()
         self.playButton.setEnabled(False)
-        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
-        self.playButton.clicked.connect(self.play)
+        self.playButton.setIcon(QIcon('./icons/playButton.png'))
+        self.playButton.setShortcut(Qt.Key_8)
+        self.playButton.enterEvent=lambda event: self.show_message("Play | Key_8")
+        self.playButton.leaveEvent = self.clear_message
+        self.playButton.clicked.connect(lambda: self.play(1,1))
+
+        self.playButtonS = QPushButton()
+        self.playButtonS.setEnabled(False)
+        self.playButtonS.setIcon(QIcon('./icons/playButtonS.png'))
+        self.playButtonS.setShortcut(Qt.Key_6)
+        self.playButtonS.enterEvent=lambda event: self.show_message("Play, 0.5X Speed | Key_6")
+        self.playButtonS.leaveEvent = self.clear_message
+        self.playButtonS.clicked.connect(lambda: self.play(0.5,1))
+
+        self.playButtonSR = QPushButton()
+        self.playButtonSR.setEnabled(False)
+        self.playButtonSR.setIcon(QIcon('./icons/playButtonSR.png'))
+        self.playButtonSR.setShortcut(Qt.Key_4)
+        self.playButtonSR.enterEvent=lambda event: self.show_message("Reverse Play, 0.5X Speed | Key_4")
+        self.playButtonSR.leaveEvent = self.clear_message
+        self.playButtonSR.clicked.connect(lambda: self.play(0.5,-1))
+        
+        self.pauseButton = QPushButton()
+        self.pauseButton.setEnabled(False)
+        self.pauseButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
+        self.pauseButton.setShortcut(Qt.Key_5)
+        self.pauseButton.enterEvent=lambda event: self.show_message("Pause | Key_5")
+        self.pauseButton.leaveEvent = self.clear_message
+        self.pauseButton.clicked.connect(self.pause)
 
         self.playBackButton = QPushButton()
         self.playBackButton.setEnabled(False)
-        self.playBackButton.setShortcut(Qt.Key_Left)
+        # self.playBackButton.setShortcut(Qt.Key_Left)
         self.playBackButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipBackward))
+        self.playBackButton.enterEvent=lambda event: self.show_message("5 Frame Backward")
+        self.playBackButton.leaveEvent = self.clear_message
         self.playBackButton.clicked.connect(self.playback)
 
         self.playBackButton1 = QPushButton()
         self.playBackButton1.setEnabled(False)
-        # self.playBackButton1.setShortcut(Qt.Key_Left)
+        self.playBackButton1.setShortcut(Qt.Key_1)
         self.playBackButton1.setIcon(QIcon('./icons/playBackButton1.png'))
+        self.playBackButton1.enterEvent=lambda event: self.show_message("1 Frame Backward | Key_1")
+        self.playBackButton1.leaveEvent = self.clear_message
         self.playBackButton1.clicked.connect(self.playback1)
 
         self.playFrontButton = QPushButton()
         self.playFrontButton.setEnabled(False)
-        self.playFrontButton.setShortcut(Qt.Key_Right)
+        # self.playFrontButton.setShortcut(Qt.Key_Right)
         self.playFrontButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
+        self.playFrontButton.enterEvent=lambda event: self.show_message("5 Frame Forward")
+        self.playFrontButton.leaveEvent = self.clear_message
         self.playFrontButton.clicked.connect(self.playfront)
 
         self.playFrontButton1 = QPushButton()
         self.playFrontButton1.setEnabled(False)
-        # self.playFrontButton.setShortcut(Qt.Key_Right)
+        self.playFrontButton1.setShortcut(Qt.Key_3)
         self.playFrontButton1.setIcon(QIcon('./icons/playFrontButton1.png'))
+        self.playFrontButton1.enterEvent=lambda event: self.show_message("1 Frame Forward | Key_3")
+        self.playFrontButton1.leaveEvent = self.clear_message
         self.playFrontButton1.clicked.connect(self.playfront1)
 
         self.positionSlider = QSlider(Qt.Horizontal)
@@ -469,7 +544,10 @@ class VideoWindow(QMainWindow):
         controlLayout.setContentsMargins(0, 0, 0, 0)
         controlLayout.addWidget(self.playBackButton)
         controlLayout.addWidget(self.playBackButton1)
+        controlLayout.addWidget(self.playButtonSR)
+        controlLayout.addWidget(self.pauseButton)
         controlLayout.addWidget(self.playButton)
+        controlLayout.addWidget(self.playButtonS)
         controlLayout.addWidget(self.playFrontButton1)
         controlLayout.addWidget(self.playFrontButton)
         controlLayout.addWidget(self.positionSlider)
@@ -491,7 +569,7 @@ class VideoWindow(QMainWindow):
         control3DLayout.addWidget(self.ClearButton,1)
         control3DLayout.addWidget(self.PSaveButton,1)
         control3DLayout.addWidget(self.SaveButton,1)
-        control3DLayout.addWidget(self.SCButton,1)
+        # control3DLayout.addWidget(self.SCButton,1)
         control3DLayout.addWidget(self.PLine,0.5)
         # control3DLayout.addWidget(self.fillUpBox)
         
@@ -539,22 +617,31 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer.showImage()
         return
     
-    def play(self):
+    def play(self,speed=1,direction=1):
+        # print(playspeed)
         if self.mediaPlayer.thread is None: return
         if self.mediaPlayer.thread._run_flag:
             self.mediaPlayer.stop_video()
-            self.playButton.setIcon(
-                    self.style().standardIcon(QStyle.SP_MediaPlay))
-        else:
-            self.mediaPlayer.start_video()
-            self.playButton.setIcon(
-                    self.style().standardIcon(QStyle.SP_MediaPause))            
+        self.mediaPlayer.start_video(speed,direction)
+
+    def pause(self):
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+           self.mediaPlayer.stop_video()
+        # if self.mediaPlayer.thread._run_flag:
+        #     self.mediaPlayer.stop_video()
+        #     self.playButton.setIcon(
+        #             self.style().standardIcon(QStyle.SP_MediaPlay))
+        # else:
+        #     self.mediaPlayer.start_video()
+        #     self.playButton.setIcon(
+        #             self.style().standardIcon(QStyle.SP_MediaPause))            
 
     def sliderPause(self):
         # When slider is clicked
         self.mediaPlayer.stop_video()
-        self.playButton.setIcon(
-                self.style().standardIcon(QStyle.SP_MediaPlay))
+        # self.playButton.setIcon(
+        #         self.style().standardIcon(QStyle.SP_MediaPlay))
         
     def setImageSlider(self):
         # Update Image after slider release
@@ -566,6 +653,9 @@ class VideoWindow(QMainWindow):
         self.positionSlider.setValue(position)
         self.mediaPlayer.setPosition(position)
         self.main3Dviewer.setPosition(position)
+        # print(position, self.main3Dviewer.mydict['duration_off'])
+        if position+1==self.main3Dviewer.mydict['duration_off']:
+            self.SaveAction()
         # self.main3Dviewer.draw_frame(position, plot_vec = True)
 
     def viewSelect(self):

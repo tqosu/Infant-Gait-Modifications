@@ -33,6 +33,8 @@ class VideoThread(QThread):
         height_video = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.h,self.w=int(height_video/2),int(width_video/2)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        self.S=1
+        self.D=1
         self.duration_on= int(self.fps*mydict['on']) 
         self.duration_off= int(self.fps*mydict['off']) 
         self.curr_frame = self.duration_on
@@ -59,11 +61,17 @@ class VideoThread(QThread):
                     self.last_image = cv_img        
                     self.change_pixmap_signal.emit(cv_img)
 
-                    time.sleep(1/self.fps)
-                    self.curr_frame += 1
-                    if self.curr_frame>self.duration_off:
-                        self.curr_frame = self.duration_on
-                        self.cap.set(1,self.curr_frame) 
+                    time.sleep(1/self.fps/self.S)
+                    if self.D>0:
+                        self.curr_frame += 1
+                        if self.curr_frame>self.duration_off:
+                            self.curr_frame = self.duration_on
+                            self.cap.set(1,self.curr_frame) 
+                    else:
+                        self.curr_frame -= 1
+                        if self.curr_frame<self.duration_on:
+                            self.curr_frame = self.duration_off
+                            self.cap.set(1,self.curr_frame) 
                 else:
                     print('Error1-7ea5f38b078ac28e434f25c9468509148a7527ba')
                     break
