@@ -51,7 +51,7 @@ class VideoWindow(QMainWindow):
         set_a=list(set(self.dataframe2['total_trial_num'].tolist()))
         self.trnu_combo.clear()
         slbr=self.slbr_combo.currentText()
-        # print(self.subj,slbr,text)
+
         info=[self.subj,'',slbr]
 
         user_path='User/'+self.user_combo.currentText()+'/'
@@ -71,7 +71,7 @@ class VideoWindow(QMainWindow):
             int_idx=int(idx)
             # print(self.dataframe3.index)
             if int_idx in self.dataframe3.index:
-                print(self.dataframe3.loc[int_idx]['partial'])
+                # print(self.dataframe3.loc[int_idx]['partial'])
                 if self.dataframe3.loc[int_idx]['partial']==True:
                     padding='P'
                 else:
@@ -137,8 +137,7 @@ class VideoWindow(QMainWindow):
         
         on=self.str2sec(on)-offset
         off=self.str2sec(off)-offset
-        # print(info[3])
-        # print(on,off)    
+
         self.mydict['filename']=fileName
         self.mydict['filename1']=fileName1
         self.mydict['on']=on
@@ -326,10 +325,8 @@ class VideoWindow(QMainWindow):
         self.sliderPause()
         index = self.trnu_combo.currentIndex()
         total=self.trnu_combo.count()
-        # print(index,total)
         self.trnu_combo.setCurrentIndex((index+1)%total)
         self.trnu_combo_onActivated(self.trnu_combo.currentText())
-        # print(self.trnu_combo.currentText())
         # pass
         # self.main3Dviewer.AddAction('L')
 
@@ -342,21 +339,15 @@ class VideoWindow(QMainWindow):
     
     def PrevAction(self):
         self.sliderPause()
-        # print(self.mediaPlayer.duration_on-1)
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
         self.setPosition(position)
         self.mediaPlayer.showImage()
         
     def NextAction(self):
-        # print('next')
         self.sliderPause()
-        # print('next 0')
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
-        # print('next 1')
         self.setPosition(position)
-        # print('next 2')
         self.mediaPlayer.showImage()
-        # print("next end")
 
     def RemoveAction(self):
         self.sliderPause()
@@ -370,7 +361,6 @@ class VideoWindow(QMainWindow):
         self.update_trnu_combo(-1)
 
     def setFile(self):
-        # print("# location 1")
 
         self.mediaPlayer.set_file(self.mydict)
         self.mydict['duration_on']=self.mediaPlayer.duration_on
@@ -542,14 +532,14 @@ class VideoWindow(QMainWindow):
 
         controlLayout = QHBoxLayout()
         controlLayout.setContentsMargins(0, 0, 0, 0)
-        controlLayout.addWidget(self.playBackButton)
+        # controlLayout.addWidget(self.playBackButton)
         controlLayout.addWidget(self.playBackButton1)
         controlLayout.addWidget(self.playButtonSR)
         controlLayout.addWidget(self.pauseButton)
         controlLayout.addWidget(self.playButton)
         controlLayout.addWidget(self.playButtonS)
         controlLayout.addWidget(self.playFrontButton1)
-        controlLayout.addWidget(self.playFrontButton)
+        # controlLayout.addWidget(self.playFrontButton)
         controlLayout.addWidget(self.positionSlider)
         controlLayout.addLayout(sceneBLayout)
 
@@ -597,10 +587,10 @@ class VideoWindow(QMainWindow):
         return
     
     def playback1(self):
-        self.sliderPause()
-        position = max(self.mediaPlayer.duration_on, self.positionSlider.value() - 1)
-        self.setPosition(position)
-        self.mediaPlayer.showImage()
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+            self.mediaPlayer.stop_video()
+        self.mediaPlayer.thread.run_one(-1)
         return
 
     def playfront(self):
@@ -611,14 +601,18 @@ class VideoWindow(QMainWindow):
         return
     
     def playfront1(self):
-        self.sliderPause()
-        position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 1)
-        self.setPosition(position)
-        self.mediaPlayer.showImage()
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+            self.mediaPlayer.stop_video()
+        self.mediaPlayer.thread.run_one(1)
+
+        # self.sliderPause()
+        # position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 1)
+        # self.setPosition(position)
+        # self.mediaPlayer.showImage()
         return
     
     def play(self,speed=1,direction=1):
-        # print(playspeed)
         if self.mediaPlayer.thread is None: return
         if self.mediaPlayer.thread._run_flag:
             self.mediaPlayer.stop_video()
@@ -653,9 +647,8 @@ class VideoWindow(QMainWindow):
         self.positionSlider.setValue(position)
         self.mediaPlayer.setPosition(position)
         self.main3Dviewer.setPosition(position)
-        # print(position, self.main3Dviewer.mydict['duration_off'])
         if position+1==self.main3Dviewer.mydict['duration_off']:
-            self.SaveAction()
+            self.SaveAction(part=1)
         # self.main3Dviewer.draw_frame(position, plot_vec = True)
 
     def viewSelect(self):

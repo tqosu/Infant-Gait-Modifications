@@ -32,7 +32,7 @@ class ResultApp(QWidget):
         self.slbr='Bridge'
         self.img=self.gen_image()
         self.img1=self.img.copy()
-        img = cv2.vconcat([self.img, self.img1])
+        img = cv2.vconcat([self.img1, self.img])
         # print(img.shape)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
@@ -60,13 +60,30 @@ class ResultApp(QWidget):
             cv2.rectangle(img,coord1,coord2,(107,189,229),-1)
             # print(img.shape)
             # print(coord1,coord2)
-            color=(0,0,0)
             thickness=1
+            color=(0,0,0)     
             for i in range(2,30,2):
                 a=int((original_i-i)*rate)
                 start_point=(a,coord1[1])
                 end_point=(a,coord2[1])
-                img = cv2.line(img, start_point, end_point, color, thickness)
+                img = cv2.line(img, start_point, end_point, color, thickness)    
+            colors=[(134,200,99),(165,181,117),(157,152,90),(146,191,125),(130,114,92)]
+            cnt=0
+            for i in range(-2,-50,-2):
+                a=int((original_i-i)*rate)
+                start_point=(a,0*rate)
+                end_point=(a,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+            colors.reverse()
+            cnt=1
+            for i in range(32,100,2):
+                a=int((original_i-i)*rate)
+                start_point=(a,0*rate)
+                end_point=(a,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+
             img [0,:,:]=(255,255,255)
             self.original_i=original_i
             self.rate=rate
@@ -88,7 +105,6 @@ class ResultApp(QWidget):
             L=38
             adjac=L*cos
 
-
             a=int((60+adjac+32)*rate)
             img = np.zeros((30*rate,a,3), np.uint8)+255
             original_i=100
@@ -99,6 +115,38 @@ class ResultApp(QWidget):
             a,b=int(a*rate),int(b*rate)
             cv2.rectangle(img,(a,0),(b,30*rate),(107,189,229),-1)
             cv2.rectangle(img,(b,0),(b+32*rate,30*rate),(157,163,110),-1)
+
+            colors=[(134,200,99),(165,181,117),(157,152,90),(146,191,125),(130,114,92)]
+            a=original_i-40
+            b=a+adjac
+            step=adjac/19
+            i=0
+            cnt=4
+            thickness=1
+            while i<adjac:
+                a1=int((a+i)*rate)
+                start_point=(a1,0*rate)
+                end_point=(a1,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+                i+=step
+            for i in range(0,36,2):
+                a1=int((b+i)*rate)
+                start_point=(a1,0*rate)
+                end_point=(a1,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+                i+=step
+            colors.reverse()
+            cnt=1
+            for i in range(-2,-66,-2):
+                a1=int((a+i)*rate)
+                start_point=(a1,0*rate)
+                end_point=(a1,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+                i+=step
+
             img [0,:,:]=(255,255,255)
             self.original_i=original_i
             self.rate=rate
@@ -132,7 +180,7 @@ class ResultApp(QWidget):
             self.data[self.position][key]=self.data[self.position]['3dp'][0]
         self.setPosition1()
         # print(self.position)
-        img=cv2.vconcat([self.img2, self.img1])
+        img=cv2.vconcat([self.img1, self.img2])
         # print(img.shape)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
@@ -145,7 +193,7 @@ class ResultApp(QWidget):
                         self.data[position].pop(key)
         self.img=self.gen_image()
         self.img1=self.img.copy()
-        img = cv2.vconcat([self.img, self.img1])
+        img = cv2.vconcat([self.img1, self.img])
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)     
     
@@ -167,7 +215,7 @@ class ResultApp(QWidget):
         for position in self.myfoot:
             self.setPosition1(position)
 
-        img = cv2.vconcat([self.img, self.img1])
+        img = cv2.vconcat([self.img1, self.img])
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)  
 
@@ -183,7 +231,7 @@ class ResultApp(QWidget):
     def reset(self):
         self.img=self.gen_image()
         self.img1=self.img.copy()
-        img = cv2.vconcat([self.img, self.img1])
+        img = cv2.vconcat([self.img1, self.img])
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
     
@@ -204,12 +252,12 @@ class ResultApp(QWidget):
                     cv2.circle(self.img1,(y1,x1), self.radius, (255,0,0), thickness1)
                     cv2.line(self.img1, (y1+self.radius,x1), (y1-self.radius,x1), (255,0,0), thickness1)
                 elif key=='L1':
-                    cv2.circle(self.img1,(y1,x1), self.radius, (227,100,85), thickness1)
+                    cv2.circle(self.img1,(y1,x1), self.radius, (255,0,0), thickness1)
                 elif key=='R':
                     cv2.circle(self.img1,(y1,x1), self.radius, (0,0,255), thickness1)
                     cv2.line(self.img1, (y1+self.radius,x1), (y1-self.radius,x1), (0,0,255), thickness1)
                 elif key=='R1':
-                    cv2.circle(self.img1,(y1,x1), self.radius, (120,70,237), thickness1)
+                    cv2.circle(self.img1,(y1,x1), self.radius, (0,0,255), thickness1)
         
 
     def setPosition(self, position):
@@ -253,7 +301,7 @@ class ResultApp(QWidget):
         # )
         self.img = cv2.addWeighted(overlay, alpha, self.img, 1 - alpha, 0)
         self.img2 =img1
-        img=cv2.vconcat([img1, self.img1])
+        img=cv2.vconcat([self.img1,img1])
         # print(img.shape)
         # print('cur_y: {}'.format(cur_y))
         if cur_y!=-1:
