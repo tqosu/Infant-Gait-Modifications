@@ -86,6 +86,8 @@ class VideoWindow(QMainWindow):
     # path2 change to user's when saving 
     # path1 is the offset doesn't matter
     def trnu_combo_onActivated(self,text):
+        self.viewMenu1.setEnabled(True)
+        self.viewMenu2.setEnabled(True)
         user_path='User/'+self.user_combo.currentText()+'/'
 
         text=text[1:]
@@ -156,6 +158,8 @@ class VideoWindow(QMainWindow):
         self.setFile()
         if not self.mediaPlayer.isVisible():
             self.mediaPlayer.show()
+        if not self.main3Dviewer.isVisible():
+            self.main3Dviewer.show()
         # self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 
 
@@ -247,6 +251,8 @@ class VideoWindow(QMainWindow):
         self.ClearButton = QPushButton("&Clear", self)
         self.ClearButton.setEnabled(True)
         self.ClearButton.setIcon(QIcon('./icons/ClearButton.png'))
+        self.ClearButton.enterEvent=lambda event: self.show_message("Clear All Estimates")
+        self.ClearButton.leaveEvent = self.clear_message
         self.ClearButton.clicked.connect(self.ClearAction)
 
         self.SaveButton = QPushButton("&CSave", self)
@@ -259,40 +265,7 @@ class VideoWindow(QMainWindow):
         self.PSaveButton.setIcon(QIcon('./icons/PSaveButton.png'))
         self.PSaveButton.clicked.connect(partial(self.SaveAction,1))
 
-        # self.SCButton = QPushButton("&Shortcuts", self)
-        # self.SCButton.setEnabled(True)
-        # self.SCButton.setIcon(QIcon('./icons/SCButton.png'))
-        # self.SCButton.clicked.connect(self.SCAction)
-
-    # def SCAction(self):
-    #     dlg = QMessageBox(self)
-    #     dlg.setWindowTitle("Shortcuts")
-    #     mysc=[]
-    #     # mysc.append('Key_Up')
-    #     # mysc.append('Key_Down')
-    #     key='001 Key_Left:'.ljust(20)
-    #     func='PlayBack - 5 frames'.ljust(50)
-    #     mysc.append(key+func)
-
-    #     key='002 Key_Right:'.ljust(20)
-    #     func='PlayForward + 5 frames'.ljust(50)
-    #     mysc.append(key+func)
-
-    #     key='003 Key_Up:'.ljust(20)
-    #     func='Add A Left Step'.ljust(50)
-    #     mysc.append(key+func)
-
-    #     key='004 Key_Down:'.ljust(20)
-    #     func='Add A Right Step'.ljust(50)
-    #     mysc.append(key+func)
-
-    #     key='005 Key_Delete:'.ljust(20)
-    #     func='Delete Step'.ljust(50)
-    #     mysc.append(key+func)
-
-    #     mystr='\n'.join(mysc)
-    #     dlg.setText(mystr)
-    #     button = dlg.exec()
+      
 
     def update_trnu_combo(self,part):
         text=self.trnu_combo.currentText()
@@ -394,11 +367,15 @@ class VideoWindow(QMainWindow):
 
     def clear_message(self, event):
         self.statusBar().clearMessage()
+    
 
-    def __init__(self):
-        super(VideoWindow, self).__init__()
-        self.mydict=defaultdict()
-        # self.init()
+    def menu_init(self):
+        menuBar = self.menuBar()
+        # fileMenu = menuBar.addMenu('&File')
+        # #fileMenu.addAction(newAction)
+        # fileMenu.addAction(openAction)
+        # fileMenu.addAction(exitAction)
+
         self.viewAction, self.curr_views = [], [0]
         for i in range(5):
             # Create exit action
@@ -417,12 +394,101 @@ class VideoWindow(QMainWindow):
         self.Protractor.triggered.connect(self.viewSelect)
         self.viewAction.append(self.Protractor)
 
+
+        self.viewMenu1 = menuBar.addMenu('&Player')
+        for i in range(6):
+            self.viewMenu1.addAction(self.viewAction[i])
+            if i == 0:
+                self.viewMenu1.addSeparator()
+
+        self.viewMenu2 = menuBar.addMenu('&Top-down')
+        self.action_menu_aux = QAction('&Auxiliary', self, checkable=True)        
+        self.action_menu_aux.setChecked(True)
+        # self.action_menu_aux.setData(1)
+        self.action_menu_aux.triggered.connect(self.viewSelect2)
+        self.action_menu_aux.setStatusTip('Show foot location for each frame')
+        self.viewMenu2.addAction(self.action_menu_aux)
+
+
+
+        self.action_menu_vtl = QAction('&Vertical', self, checkable=True)        
+        self.action_menu_vtl.setChecked(False)
+        # self.action_menu_vtl.setData(1)
+        self.action_menu_vtl.triggered.connect(self.viewSelect2)
+        self.action_menu_vtl.setStatusTip('Choose vertical or horizontal')
+        self.viewMenu2.addAction(self.action_menu_vtl)
+        # action.triggered.connect(self.viewSelect)
+        # self.viewAction.append(action)
+
+        self.viewMenu1.setEnabled(False)
+        self.viewMenu2.setEnabled(False)
+    def viewSelect2(self):
+        self.mediaPlayer.stop_video()
+        self.main3Dviewer.action_menu_aux=self.action_menu_aux.isChecked()
+        self.main3Dviewer.action_menu_vtl=self.action_menu_vtl.isChecked()
+        self.main3Dviewer.adjust_window_size()
+        # view_id = self.sender().data()
+        # if view_id == 0:
+        #     self.curr_views = [view_id]
+        # elif view_id == 5:
+        #     self.curr_views = [view_id]
+        # else:
+        #     if len(self.curr_views) == 1:
+        #         if self.curr_views[0] == 0:
+        #             self.curr_views = [view_id]
+        #         elif view_id not in self.curr_views: self.curr_views.append(view_id)
+        #     else:
+        #         if view_id not in self.curr_views: 
+        #             self.curr_views.pop(0)
+        #             self.curr_views.append(view_id)
+        #         else: self.curr_views.remove(view_id)
+
+        # for i in range(5): 
+        #     if i in self.curr_views: self.viewAction[i].setChecked(True)
+        #     else: self.viewAction[i].setChecked(False)
+        # self.mediaPlayer.view = sorted(self.curr_views)
+        # self.mediaPlayer.thread.view = sorted(self.curr_views)
+        # self.mediaPlayer.update_last_image()
+
+    def viewSelect(self):
+        self.mediaPlayer.stop_video()
+        view_id = self.sender().data()
+        if view_id == 0:
+            self.curr_views = [view_id]
+        elif view_id == 5:
+            self.curr_views = [view_id]
+        else:
+            if len(self.curr_views) == 1:
+                if self.curr_views[0] == 0:
+                    self.curr_views = [view_id]
+                elif view_id not in self.curr_views: self.curr_views.append(view_id)
+            else:
+                if view_id not in self.curr_views: 
+                    self.curr_views.pop(0)
+                    self.curr_views.append(view_id)
+                else: self.curr_views.remove(view_id)
+
+        for i in range(5): 
+            if i in self.curr_views: self.viewAction[i].setChecked(True)
+            else: self.viewAction[i].setChecked(False)
+        self.mediaPlayer.view = sorted(self.curr_views)
+        self.mediaPlayer.thread.view = sorted(self.curr_views)
+        self.mediaPlayer.update_last_image()
+
+    def __init__(self):
+        super(VideoWindow, self).__init__()
+        self.mydict=defaultdict()
+        self.menu_init()
+        # self.init()
+       
+
+
         self.PLine=QLineEdit(self)
         self.PLine.setEnabled(False)
         self.PLine.textChanged[str].connect(self.PLineChanged)
 
         self.prepare_trials()
-        self.setWindowTitle("Flex") 
+        self.setWindowTitle("3D Foot Position Correction") 
         self.setWindowIcon(QIcon('./icons/baby-boy.png'))
         self.move(200, 100)
 
@@ -505,26 +571,20 @@ class VideoWindow(QMainWindow):
 
         self.resetButton = QPushButton("&Reset View", self)
         self.resetButton.setEnabled(True)
+        self.resetButton.setShortcut(Qt.Key_Space)
+        self.resetButton.enterEvent=lambda event: self.show_message("Top-down View Reset | Key_Space")
+        self.resetButton.leaveEvent = self.clear_message
         self.resetButton.setIcon(QIcon('./icons/resetButton.png'))
         self.resetButton.clicked.connect(self.reset3D)
 
-        self.clearRoomButton = QCheckBox("&Hide scene", self)
-        self.clearRoomButton.setEnabled(True)
-        self.clearRoomButton.setChecked(False)
+        # self.clearRoomButton = QCheckBox("&Hide scene", self)
+        # self.clearRoomButton.setEnabled(True)
+        # self.clearRoomButton.setChecked(False)
         # self.clearRoomButton.clicked.connect(self.main3Dviewer.clearRoom)
 
+        
+        
 
-        menuBar = self.menuBar()
-        # fileMenu = menuBar.addMenu('&File')
-        # #fileMenu.addAction(newAction)
-        # fileMenu.addAction(openAction)
-        # fileMenu.addAction(exitAction)
-
-        viewMenu = menuBar.addMenu('&View')
-        for i in range(6):
-            viewMenu.addAction(self.viewAction[i])
-            if i == 0:
-                viewMenu.addSeparator()
 
         sceneBLayout = QVBoxLayout()
         sceneBLayout.addWidget(self.resetButton)
@@ -564,7 +624,7 @@ class VideoWindow(QMainWindow):
         # control3DLayout.addWidget(self.fillUpBox)
         
         view3DLayout = QVBoxLayout()
-        view3DLayout.addWidget(self.main3Dviewer)
+        # view3DLayout.addWidget(self.main3Dviewer)
         view3DLayout.addLayout(control3DLayout)
 
 
@@ -651,30 +711,7 @@ class VideoWindow(QMainWindow):
             self.SaveAction(part=1)
         # self.main3Dviewer.draw_frame(position, plot_vec = True)
 
-    def viewSelect(self):
-        self.mediaPlayer.stop_video()
-        view_id = self.sender().data()
-        if view_id == 0:
-            self.curr_views = [view_id]
-        elif view_id == 5:
-            self.curr_views = [view_id]
-        else:
-            if len(self.curr_views) == 1:
-                if self.curr_views[0] == 0:
-                    self.curr_views = [view_id]
-                elif view_id not in self.curr_views: self.curr_views.append(view_id)
-            else:
-                if view_id not in self.curr_views: 
-                    self.curr_views.pop(0)
-                    self.curr_views.append(view_id)
-                else: self.curr_views.remove(view_id)
-
-        for i in range(5): 
-            if i in self.curr_views: self.viewAction[i].setChecked(True)
-            else: self.viewAction[i].setChecked(False)
-        self.mediaPlayer.view = sorted(self.curr_views)
-        self.mediaPlayer.thread.view = sorted(self.curr_views)
-        self.mediaPlayer.update_last_image()
+    
 def run():
     """
     run(video_file=None, att_file=None) function run the GUI for visualizaing video
@@ -686,10 +723,11 @@ def run():
     app = QApplication(sys.argv)
     player = VideoWindow()
     rate=10
-    player.resize(120*rate , (30)*rate)
+    player.resize(120*rate , (10)*rate)
     player.show()
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
     run()
+
 

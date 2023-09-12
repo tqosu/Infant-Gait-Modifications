@@ -10,15 +10,15 @@ import sys
 class ResultApp(QWidget):
     def __init__(self):
         super().__init__()
-        rate=8
-        self.disply_width = 140*rate
-        self.display_height = 60*rate
+        self.setWindowTitle("A Top-down View") 
+        self.action_menu_aux=True
+        self.action_menu_vtl=False
+        self.rate=8
+        self.display_width = 130*self.rate
+        self.display_height = 60*self.rate
         self.annotation_on = False
-        #self.disply_width = 670
-        #self.display_height = 540
-        # create the label that holds the image
         self.image_label = QLabel(self)
-        self.image_label.setMinimumSize(self.disply_width, self.display_height)
+        self.image_label.setMinimumSize(self.display_width, self.display_height)
         #self.image_label.setStyleSheet("border :3px solid black;")
         self.image_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.image_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
@@ -36,10 +36,22 @@ class ResultApp(QWidget):
         # print(img.shape)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
-    
+        
+        # print(self.action_menu_aux)
+    def adjust_window_size(self):
+        display_width, display_height = self.display_width, self.display_height
+        if self.action_menu_aux==False:
+            display_height = display_height//2
+        if self.action_menu_vtl==True:
+            display_width, display_height = display_height, display_width
+        
+        self.image_label.setMinimumSize(display_width, display_height)
+        self.resize(display_width, display_height)
+        self.setPosition(self.position)
+
     def gen_image(self):
         if self.slbr=='Bridge':
-            rate=15
+            rate=self.rate
             x1,x2=3.95, 20
             # x1,x2=args.x1,args.x2
 
@@ -61,13 +73,16 @@ class ResultApp(QWidget):
             # print(img.shape)
             # print(coord1,coord2)
             thickness=1
-            color=(0,0,0)     
+            csle=130
+            color=(csle,csle,csle)     
             for i in range(2,30,2):
                 a=int((original_i-i)*rate)
                 start_point=(a,coord1[1])
                 end_point=(a,coord2[1])
                 img = cv2.line(img, start_point, end_point, color, thickness)    
-            colors=[(134,200,99),(165,181,117),(157,152,90),(146,191,125),(130,114,92)]
+            # colors=[(134,200,99),(165,181,117),(157,152,90),(146,191,125),(130,114,92)]
+
+            colors=[(csle,csle,csle) for i in range(5)]
             cnt=0
             for i in range(-2,-50,-2):
                 a=int((original_i-i)*rate)
@@ -90,7 +105,7 @@ class ResultApp(QWidget):
             self.radius=1*rate
             # self.radius2=*rate
         else:
-            rate=15
+            rate=self.rate
             if self.mydict['angle']!=-1:
                 print('yes')
                 angle=self.mydict['angle']
@@ -116,7 +131,9 @@ class ResultApp(QWidget):
             cv2.rectangle(img,(a,0),(b,30*rate),(107,189,229),-1)
             cv2.rectangle(img,(b,0),(b+32*rate,30*rate),(157,163,110),-1)
 
-            colors=[(134,200,99),(165,181,117),(157,152,90),(146,191,125),(130,114,92)]
+            # colors=[(134,200,99),(165,181,117),(157,152,90),(146,191,125),(130,114,92)]
+            csle=130
+            colors=[(csle,csle,csle) for i in range(5)]
             a=original_i-40
             b=a+adjac
             step=adjac/19
@@ -266,6 +283,7 @@ class ResultApp(QWidget):
         overlay = self.img.copy()
         img1 = self.img.copy()
         cur_y=-1
+        cur_key=''
         # print(position)
         if position in self.data:
             self.setPosition1()
@@ -293,6 +311,7 @@ class ResultApp(QWidget):
                     x,y,z=self.data[position][key]
                     y1=(self.original_i+y)*self.rate
                     cur_y=int(y1)
+                    cur_key=key[0]
                     # print(self.data[position][key],cur_y)
                     # break
         alpha = 0.8  # Transparency factor.
@@ -304,8 +323,13 @@ class ResultApp(QWidget):
         img=cv2.vconcat([self.img1,img1])
         # print(img.shape)
         # print('cur_y: {}'.format(cur_y))
+        rline=2
         if cur_y!=-1:
-            img [:,cur_y-1:cur_y+2,:]=(0,0,0)
+            if cur_key=='L':
+                img [:,cur_y-rline:cur_y+rline+1,:]=(255,0,0)
+            else:
+                img [:,cur_y-rline:cur_y+rline+1,:]=(0,0,255)
+
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
         # if position+1==self.mydict['duration_off']:
@@ -313,11 +337,25 @@ class ResultApp(QWidget):
         
             # def draw_frame(self,f):
 
+    def select_view(self, img):
+        h, w, _ = img.shape
+
+        return_img=img
+        if self.action_menu_aux==False:
+            return_img=return_img[:h//2, :]
+        if self.action_menu_vtl==True:
+            return_img= cv2.rotate(return_img, cv2.ROTATE_90_CLOCKWISE)
+        return return_img
+        # return im
+
 
     def convert_cv_qt(self, cv_img):
         # print("A")
         """Convert from an opencv image to QPixmap"""
-        # cv_img = self.select_view(cv_img)
+        # print("# location 1")
+        # print(cv_img.shape)
+        cv_img = self.select_view(cv_img)
+        # print(cv_img.shape)
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
 
         h, w, ch = rgb_image.shape

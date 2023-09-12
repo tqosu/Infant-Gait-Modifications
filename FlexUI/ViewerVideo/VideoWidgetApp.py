@@ -2,7 +2,8 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QLabel, QSizePolicy, QVBoxLayout, QWidget
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget,QAction,QMenu
+# from PyQt5.QtWidgets import QAction
 from PyQt5.QtGui import QIcon,QImage, QPixmap
 
 import numpy as np
@@ -41,8 +42,8 @@ class VideoApp(QWidget):
         # set the vbox layout as the widgets layout
         self.setLayout(vbox)
 
-        # create the video capture thread
-        # self.duration = 0
+
+       
         self.duration_on, self.duration_off= 0, 0
         self.width_video, self.height_video = 0, 0
         self.last_position = 0
