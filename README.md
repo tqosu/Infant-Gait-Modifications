@@ -15,12 +15,14 @@ __3. Install miniconda__ \
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
 bash ~/miniconda.sh -b -p $HOME/miniconda
 
-__4. Install conda virtual environment and python3.6__ \
+__4. Install conda virtual environment and python3.6__ 
+```
+source ~/miniconda3/bin/activate 
 conda create -n myenv python=3.6
-
+```
 __5. Activate myenv environment__ 
 ```
-source ~/miniconda/bin/activate 
+source ~/miniconda3/bin/activate 
 conda activate myenv
 ```
 

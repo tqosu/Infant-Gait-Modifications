@@ -113,7 +113,7 @@ class VideoWindow(QMainWindow):
         offset=data1['start_time_seconds']
 
         pathdata='2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
-        path2='./Flex/box5_2/'+pathdata
+        path2='./Flex/box6_3/'+pathdata
         path2sv=user_path+pathdata
         
         os.makedirs(user_path, exist_ok=True)

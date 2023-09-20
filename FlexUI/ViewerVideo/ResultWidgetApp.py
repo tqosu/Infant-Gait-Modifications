@@ -187,14 +187,16 @@ class ResultApp(QWidget):
 
     
     def AddAction(self,key):
-        length=len(self.data[self.position]['3dp'])
-        if length==2:
-            if key =='L':
-                self.data[self.position][key]=self.data[self.position]['3dp'][0]
-            elif key=='R':
-                self.data[self.position][key]=self.data[self.position]['3dp'][1]
-        else:
-            self.data[self.position][key]=self.data[self.position]['3dp'][0]
+        # print()
+        self.data[self.position][key]=self.data[self.position]['3dp'][key]
+        # length=len(self.data[self.position]['3dp'].keys())
+        # if length==2:
+        #     if key =='L':
+        #         self.data[self.position][key]=self.data[self.position]['3dp'][0]
+        #     elif key=='R':
+        #         self.data[self.position][key]=self.data[self.position]['3dp'][1]
+        # else:
+        #     self.data[self.position][key]=self.data[self.position]['3dp'][0]
         self.setPosition1()
         # print(self.position)
         img=cv2.vconcat([self.img1, self.img2])
@@ -288,24 +290,25 @@ class ResultApp(QWidget):
         if position in self.data:
             self.setPosition1()
             # print(self.data[position]['3dp'])
-            self.data[position]['3dp'].sort()
+            # self.data[position]['3dp'].sort()
             # print(self.data[position]['3dp'])
-            length=len(self.data[position]['3dp'])
-            for i,data1 in enumerate(self.data[position]['3dp']):
+            # length=len(self.data[position]['3dp'])
+            for key in self.data[position]['3dp']:
             # print(k)
+                data1=self.data[position]['3dp'][key]
                 x,y,z=data1
                 # print(x,y,z)
                 y1,x1=(self.original_i+y)*self.rate,x*self.rate
                 y1,x1=int(y1),int(x1)
                 
                 cv2.circle(self.img,(y1,x1), self.radius, (0,0,0), thickness1)
-                if length==2:
-                    if i==0:
-                        cv2.circle(img1,(y1,x1), self.radius, (255,0,0), thickness1)
-                    else:
-                        cv2.circle(img1,(y1,x1), self.radius, (0,0,255), thickness1)
+
+                if key.find("L")==0:
+                    cv2.circle(img1,(y1,x1), self.radius, (255,0,0), thickness1)
                 else:
-                    cv2.circle(img1,(y1,x1), self.radius, (255,255,255), thickness1)
+                    cv2.circle(img1,(y1,x1), self.radius, (0,0,255), thickness1)
+                # else:
+                #     cv2.circle(img1,(y1,x1), self.radius, (255,255,255), thickness1)
             for key in ['L','R','L1','R1']:
                 if key in self.data[position]:
                     x,y,z=self.data[position][key]

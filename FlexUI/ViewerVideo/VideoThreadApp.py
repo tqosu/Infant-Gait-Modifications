@@ -146,28 +146,39 @@ class VideoThread(QThread):
     def box_img(self,cv_img):
         h,w=self.h,self.w
         t=self.curr_frame
-        color = (0, 255, 0)
+        # color = (0, 255, 0)
+        color = [(0, 0, 255),(255, 0, 0)]
         thickness = 2
         # print(t)
         if t in self.data:
-            for key in self.data[t]['box']:
+            for viewid in self.data[t]['box']:
                 # print(key,self.data[t][key])
                 # if key !=2:continue
-                if key==0:
+                if viewid==0:
                     h,w=0,0
-                elif key==1:
+                elif viewid==1:
                     h,w=0,self.w
-                elif key==2:
+                elif viewid==2:
                     h,w=self.h,0
-                elif key==3:
+                elif viewid==3:
                     h,w=self.h,self.w
-    
-                for bt in self.data[t]['box'][key]:
+
+                for key in self.data[t]['box'][viewid]:
+                    bt=self.data[t]['box'][viewid][key]
+                    # print(t,self.data[t]['box'])
+                    # print(bt)
                     bt=bt.astype('int')
                     start_point = (bt[0]+w,bt[1]+h)
                     end_point = (bt[2]+w,bt[3]+h)
 
-                    cv_img=cv2.rectangle(cv_img, start_point, end_point, color, thickness)
+                    cv_img=cv2.rectangle(cv_img, start_point, end_point, color[key], thickness)
+
+                # for bt in self.data[t]['box'][key]:
+                #     bt=bt.astype('int')
+                #     start_point = (bt[0]+w,bt[1]+h)
+                #     end_point = (bt[2]+w,bt[3]+h)
+
+                #     cv_img=cv2.rectangle(cv_img, start_point, end_point, color, thickness)
         return cv_img
        
     def get_image(self, position, emit_frame=True):
