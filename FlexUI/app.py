@@ -271,6 +271,8 @@ class VideoWindow(QMainWindow):
         self.UndoButton.setEnabled(True)
         self.UndoButton.setShortcut(QKeySequence.Undo)
         self.UndoButton.setIcon(QIcon('./icons/UndoButton.png'))
+        self.UndoButton.enterEvent=lambda event: self.show_message("Undo | Command + Z")
+        self.UndoButton.leaveEvent = self.clear_message
         self.UndoButton.clicked.connect(self.UndoAction)
 
 
