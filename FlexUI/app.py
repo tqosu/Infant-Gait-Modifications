@@ -3,7 +3,7 @@ from PyQt5.QtCore import QDir, Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLineEdit, QButtonGroup,
         QPushButton, QSizePolicy, QSlider, QStyle, QVBoxLayout, QWidget,QMessageBox)
 from PyQt5.QtWidgets import QMainWindow,  QAction, QRadioButton, QSplitter, QFrame, QCheckBox, QComboBox
-from PyQt5.QtGui import QIcon, QIntValidator
+from PyQt5.QtGui import QIcon, QIntValidator,  QKeySequence
 
 import sys,json,os
 # from DevEv1.Viewer3D.Viewer3DApp import View3D
@@ -62,7 +62,7 @@ class VideoWindow(QMainWindow):
             self.dataframe3.set_index('total_trial_num', inplace=True)
         else:
             columns_with_dtypes={'subj': int, 'slope_or_bridge': str, 'user':str,
-               'angle':float, 'bridge_l':float, 'bridge_r':float,'partial':bool}
+               'bridge_l':float, 'bridge_r':float,'partial':bool}
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
 
@@ -95,12 +95,12 @@ class VideoWindow(QMainWindow):
         # self.slbr_combo_onActivated(slbr)
         # print(self.subj,slbr,text)
         info=[self.subj,'',slbr]
-        if slbr=='Slope':
-            self.Protractor.setEnabled(True)
-            self.PLine.setEnabled(True)
-        else:
-            self.Protractor.setEnabled(False)
-            self.PLine.setEnabled(False)
+        # if slbr=='Slope':
+        #     self.Protractor.setEnabled(True)
+        #     # self.PLine.setEnabled(True)
+        # else:
+        #     self.Protractor.setEnabled(False)
+            # self.PLine.setEnabled(False)
         fileName = './Flex/dataset2/2021_Flex1_{}_{}_MCH.mp4'.format(info[0],info[2])
         fileName1 = './Flex/dataset/2021_Flex1_{}_SlopeProtractor.mp4'.format(info[0])
 
@@ -124,18 +124,33 @@ class VideoWindow(QMainWindow):
 
         int_idx=int(text)
         if int_idx in self.dataframe3.index:
+            print(" # location 1")
             path2=path2sv
-            self.mydict['angle']=self.dataframe3.loc[int_idx]['angle']
-            if self.mydict['angle']!=-1:
-                angle_str=str(self.mydict['angle'])
-                self.PLine.setText(angle_str)
-        else:
-            self.mydict['angle']=-1
+            print(path2)
+            data=np.load(path2, allow_pickle=True)
+            data=data.item()['data']
+
+        #     path2=path2sv
+        #     self.mydict['angle']=self.dataframe3.loc[int_idx]['angle']
+        #     # if self.mydict['angle']!=-1:
+        #         # angle_str=str(self.mydict['angle'])
+        #         # self.PLine.setText(angle_str)
+        # else:
+        #     self.mydict['angle']=-1
         for index, row in self.dataframe2.iterrows():
             if row['total_trial_num']==int_idx:
                 on,off=row['trial_onset'],row['trial_offset']
+                self.mydict['angle']=row['trial_increment']
                 # print(row)
                 break
+        
+        if info[2]=='Bridge':
+            bridge_json='./Flex/bridge_boundary/2021_Flex1_{}_{}_MCH-{}.json'.format(info[0],info[2],int(text))
+            with open(bridge_json) as f:
+                data1 = json.load(f)
+                self.mydict['x1']=data1['x1']
+                self.mydict['x2']=data1['x2']
+                print(bridge_json)
         
         on=self.str2sec(on)-offset
         off=self.str2sec(off)-offset
@@ -165,7 +180,7 @@ class VideoWindow(QMainWindow):
 
     def prepare_trials(self):
         # self.dataframe=pd.read_csv('Flex.csv')
-        self.dataframe=pd.read_csv('Flex_0721.csv')
+        self.dataframe=pd.read_csv('Flex_0919.csv')
         
         self.user_combo = QComboBox(self)
         self.user_combo.addItem('Tieqiao')
@@ -186,19 +201,6 @@ class VideoWindow(QMainWindow):
         self.slbr_combo.textActivated[str].connect(self.slbr_combo_onActivated)
         self.trnu_combo.textActivated[str].connect(self.trnu_combo_onActivated)
         self.subject_combo_onActivated(self.subject_combo.currentText())
-        # set_a=set(self.dataframe['subj'].tolist())
-        # for index, row in self.dataframe.iterrows():
-        #     a=row['Trial'].split('Ordinal ')[1]
-        #     mystr='S'+str(row['Subject'])+', '+a.zfill(2)+', '+row['Apparatus'].rjust(6)+', '+str(row['Onset time']).zfill(9)+'-'+str(row['Offset time']).zfill(9)
-        #     self.subject_combo.addItem(mystr)
-        
-        # self.subject_combo.textActivated[str].connect(self.onActivated)
-        # self.subject_combo.setIcon(QIcon('./icons/dataset.png'))
-
-        # self.ProtractorBox =QCheckBox("",self)
-        # self.ProtractorBox.setEnabled(True)
-        # self.ProtractorBox.setIcon(QIcon('./icons/Protractor.png'))
-        # self.ProtractorBox.stateChanged.connect(self.ProtractorAction)
 
         self.TrialButton = QPushButton("", self)
         self.TrialButton.setEnabled(True)
@@ -265,6 +267,13 @@ class VideoWindow(QMainWindow):
         self.PSaveButton.setIcon(QIcon('./icons/PSaveButton.png'))
         self.PSaveButton.clicked.connect(partial(self.SaveAction,1))
 
+        self.UndoButton = QPushButton("&Undo", self)
+        self.UndoButton.setEnabled(True)
+        self.UndoButton.setShortcut(QKeySequence.Undo)
+        self.UndoButton.setIcon(QIcon('./icons/UndoButton.png'))
+        self.UndoButton.clicked.connect(self.UndoAction)
+
+
       
 
     def update_trnu_combo(self,part):
@@ -285,11 +294,18 @@ class VideoWindow(QMainWindow):
         self.sliderPause()
         mydict=self.mydict
         self.dataframe3.loc[int(self.mydict['trnu'])] =\
-            [mydict['subj'],mydict['slbr'],mydict['usr'], mydict['angle'],-1,-1,part]
+            [mydict['subj'],mydict['slbr'],mydict['usr'], -1,-1,part]
         print(self.mydict['path_csv'],part)
         self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
         self.update_trnu_combo(part)
         self.main3Dviewer.SaveAction()
+
+    def UndoAction(self):
+        self.sliderPause()
+        position=self.main3Dviewer.UndoAction()
+        if position!=-1:
+            self.setPosition(position)
+            self.mediaPlayer.showImage()    
 
     def reset3D(self):
         self.main3Dviewer.reset()
@@ -339,6 +355,7 @@ class VideoWindow(QMainWindow):
         self.mydict['duration_on']=self.mediaPlayer.duration_on
         self.mydict['duration_off']=self.mediaPlayer.duration_off
         self.main3Dviewer.set_file(self.mydict)
+        self.UndoButton.setEnabled(True)
         self.playButton.setEnabled(True)
         self.playButtonS.setEnabled(True)
         self.playButtonSR.setEnabled(True)
@@ -348,19 +365,19 @@ class VideoWindow(QMainWindow):
         self.playFrontButton.setEnabled(True)
         self.playFrontButton1.setEnabled(True)
         self.positionSlider.setRange(self.mediaPlayer.duration_on, self.mediaPlayer.duration_off)
-        for i,action in enumerate(self.viewAction):            
-            if i == 0: action.setChecked(True)
-            else: action.setChecked(False)
-        self.curr_views=[0]
+        # for i,action in enumerate(self.viewAction):            
+        #     if i == 0: action.setChecked(True)
+        #     else: action.setChecked(False)
+        # self.curr_views=[0]
         self.mediaPlayer.view = sorted(self.curr_views)
         self.mediaPlayer.thread.view = sorted(self.curr_views)
         self.mediaPlayer.showImage() 
 
-    def PLineChanged(self, text):
-        if text!='':
-            self.mydict['angle']=float(text)
-            print('angle: '+text)
-            self.main3Dviewer.set_file(self.mydict)
+    # def PLineChanged(self, text):
+    #     if text!='':
+    #         self.mydict['angle']=float(text)
+    #         print('angle: '+text)
+    #         self.main3Dviewer.set_file(self.mydict)
 
     def show_message(self, message):
         self.statusBar().showMessage(message)
@@ -388,15 +405,15 @@ class VideoWindow(QMainWindow):
             action.triggered.connect(self.viewSelect)
             self.viewAction.append(action)
     
-        self.Protractor = QAction('&Protractor', self, checkable=True)       
-        self.Protractor.setStatusTip('Select Protractor')
-        self.Protractor.setData(5)
-        self.Protractor.triggered.connect(self.viewSelect)
-        self.viewAction.append(self.Protractor)
+        # self.Protractor = QAction('&Protractor', self, checkable=True)       
+        # self.Protractor.setStatusTip('Select Protractor')
+        # self.Protractor.setData(5)
+        # self.Protractor.triggered.connect(self.viewSelect)
+        # self.viewAction.append(self.Protractor)
 
 
         self.viewMenu1 = menuBar.addMenu('&Player')
-        for i in range(6):
+        for i in range(5):
             self.viewMenu1.addAction(self.viewAction[i])
             if i == 0:
                 self.viewMenu1.addSeparator()
@@ -427,28 +444,6 @@ class VideoWindow(QMainWindow):
         self.main3Dviewer.action_menu_aux=self.action_menu_aux.isChecked()
         self.main3Dviewer.action_menu_vtl=self.action_menu_vtl.isChecked()
         self.main3Dviewer.adjust_window_size()
-        # view_id = self.sender().data()
-        # if view_id == 0:
-        #     self.curr_views = [view_id]
-        # elif view_id == 5:
-        #     self.curr_views = [view_id]
-        # else:
-        #     if len(self.curr_views) == 1:
-        #         if self.curr_views[0] == 0:
-        #             self.curr_views = [view_id]
-        #         elif view_id not in self.curr_views: self.curr_views.append(view_id)
-        #     else:
-        #         if view_id not in self.curr_views: 
-        #             self.curr_views.pop(0)
-        #             self.curr_views.append(view_id)
-        #         else: self.curr_views.remove(view_id)
-
-        # for i in range(5): 
-        #     if i in self.curr_views: self.viewAction[i].setChecked(True)
-        #     else: self.viewAction[i].setChecked(False)
-        # self.mediaPlayer.view = sorted(self.curr_views)
-        # self.mediaPlayer.thread.view = sorted(self.curr_views)
-        # self.mediaPlayer.update_last_image()
 
     def viewSelect(self):
         self.mediaPlayer.stop_video()
@@ -480,12 +475,6 @@ class VideoWindow(QMainWindow):
         self.mydict=defaultdict()
         self.menu_init()
         # self.init()
-       
-
-
-        self.PLine=QLineEdit(self)
-        self.PLine.setEnabled(False)
-        self.PLine.textChanged[str].connect(self.PLineChanged)
 
         self.prepare_trials()
         self.setWindowTitle("3D Foot Position Correction") 
@@ -577,15 +566,6 @@ class VideoWindow(QMainWindow):
         self.resetButton.setIcon(QIcon('./icons/resetButton.png'))
         self.resetButton.clicked.connect(self.reset3D)
 
-        # self.clearRoomButton = QCheckBox("&Hide scene", self)
-        # self.clearRoomButton.setEnabled(True)
-        # self.clearRoomButton.setChecked(False)
-        # self.clearRoomButton.clicked.connect(self.main3Dviewer.clearRoom)
-
-        
-        
-
-
         sceneBLayout = QVBoxLayout()
         sceneBLayout.addWidget(self.resetButton)
         # sceneBLayout.addWidget(self.clearRoomButton)
@@ -619,8 +599,9 @@ class VideoWindow(QMainWindow):
         control3DLayout.addWidget(self.ClearButton,1)
         control3DLayout.addWidget(self.PSaveButton,1)
         control3DLayout.addWidget(self.SaveButton,1)
+        control3DLayout.addWidget(self.UndoButton,1)
         # control3DLayout.addWidget(self.SCButton,1)
-        control3DLayout.addWidget(self.PLine,0.5)
+        # control3DLayout.addWidget(self.PLine,0.5)
         # control3DLayout.addWidget(self.fillUpBox)
         
         view3DLayout = QVBoxLayout()
@@ -644,33 +625,24 @@ class VideoWindow(QMainWindow):
         position = max(self.mediaPlayer.duration_on, self.positionSlider.value() - 5)
         self.setPosition(position)
         self.mediaPlayer.showImage()
-        return
     
     def playback1(self):
         if self.mediaPlayer.thread is None: return
         if self.mediaPlayer.thread._run_flag:
             self.mediaPlayer.stop_video()
         self.mediaPlayer.thread.run_one(-1)
-        return
 
     def playfront(self):
         self.sliderPause()
         position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 5)
         self.setPosition(position)
         self.mediaPlayer.showImage()
-        return
     
     def playfront1(self):
         if self.mediaPlayer.thread is None: return
         if self.mediaPlayer.thread._run_flag:
             self.mediaPlayer.stop_video()
         self.mediaPlayer.thread.run_one(1)
-
-        # self.sliderPause()
-        # position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 1)
-        # self.setPosition(position)
-        # self.mediaPlayer.showImage()
-        return
     
     def play(self,speed=1,direction=1):
         if self.mediaPlayer.thread is None: return
@@ -681,15 +653,7 @@ class VideoWindow(QMainWindow):
     def pause(self):
         if self.mediaPlayer.thread is None: return
         if self.mediaPlayer.thread._run_flag:
-           self.mediaPlayer.stop_video()
-        # if self.mediaPlayer.thread._run_flag:
-        #     self.mediaPlayer.stop_video()
-        #     self.playButton.setIcon(
-        #             self.style().standardIcon(QStyle.SP_MediaPlay))
-        # else:
-        #     self.mediaPlayer.start_video()
-        #     self.playButton.setIcon(
-        #             self.style().standardIcon(QStyle.SP_MediaPause))            
+           self.mediaPlayer.stop_video()  
 
     def sliderPause(self):
         # When slider is clicked
@@ -700,7 +664,6 @@ class VideoWindow(QMainWindow):
     def setImageSlider(self):
         # Update Image after slider release
         self.mediaPlayer.showImage()
-        return
 
     def setPosition(self, position):
         # When slider is moved

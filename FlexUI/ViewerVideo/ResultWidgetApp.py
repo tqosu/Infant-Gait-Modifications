@@ -7,6 +7,8 @@ import numpy as np
 import cv2,math
 import sys
 
+import copy
+
 class ResultApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -29,13 +31,6 @@ class ResultApp(QWidget):
         # vbox.addWidget(self.textLabel, alignment=Qt.AlignBottom)
         # set the vbox layout as the widgets layout
         self.setLayout(vbox)
-        self.slbr='Bridge'
-        self.img=self.gen_image()
-        self.img1=self.img.copy()
-        img = cv2.vconcat([self.img1, self.img])
-        # print(img.shape)
-        qt_img = self.convert_cv_qt(img)
-        self.image_label.setPixmap(qt_img)
         
         # print(self.action_menu_aux)
     def adjust_window_size(self):
@@ -52,7 +47,7 @@ class ResultApp(QWidget):
     def gen_image(self):
         if self.slbr=='Bridge':
             rate=self.rate
-            x1,x2=3.95, 20
+            x1,x2=self.mydict['x1'],self.mydict['x2']
             # x1,x2=args.x1,args.x2
 
             img = np.zeros((30*rate,140*rate,3), np.uint8)+255
@@ -106,14 +101,10 @@ class ResultApp(QWidget):
             # self.radius2=*rate
         else:
             rate=self.rate
-            if self.mydict['angle']!=-1:
-                print('yes')
-                angle=self.mydict['angle']
-            else:
-                print('no')
-                angle=0
-            # x1,x2=3.95, 20
-            # x1,x2=args.x1,args.x2
+            # if self.mydict['angle']!=-1:
+            #     print('yes')
+            angle=self.mydict['angle']
+            print('slope angle: {}'.format(angle))
 
             theta=angle/180*math.pi
             cos=math.cos(theta)
@@ -172,39 +163,24 @@ class ResultApp(QWidget):
         
     def FindFrame(self,position_end,direction):
         for position in range(self.position+direction, position_end, direction):
-            # print('# location 1 : ',end='')
-            # print(self.position, position, position_end, direction)
             if position in self.data:
                 for key in ['L','R','L1','R1']:
                     if key in self.data[position]:
                         return position
-                # if 'L' in self.data[position] or 'R' in self.data[position]:
-                #     # print(self.position,position)
-                #     return position
         return self.position
-
-
-
     
     def AddAction(self,key):
-        # print()
+        stackdata=['A',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
+        self.stack.append(stackdata)
         self.data[self.position][key]=self.data[self.position]['3dp'][key]
-        # length=len(self.data[self.position]['3dp'].keys())
-        # if length==2:
-        #     if key =='L':
-        #         self.data[self.position][key]=self.data[self.position]['3dp'][0]
-        #     elif key=='R':
-        #         self.data[self.position][key]=self.data[self.position]['3dp'][1]
-        # else:
-        #     self.data[self.position][key]=self.data[self.position]['3dp'][0]
         self.setPosition1()
-        # print(self.position)
         img=cv2.vconcat([self.img1, self.img2])
-        # print(img.shape)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
 
     def ClearAction(self):
+        stackdata=['C',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
+        self.stack.append(stackdata)
         for position in range(self.mydict['duration_on'],self.mydict['duration_off']):
             if position in self.data:
                 for key in ['L','R','L1','R1']:
@@ -224,6 +200,8 @@ class ResultApp(QWidget):
         np.save(self.mydict['path_data_sv'], mydata, allow_pickle=True)
 
     def RemoveAction(self):
+        stackdata=['R',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
+        self.stack.append(stackdata)
         if self.position in self.data:
             for key in ['L','R','L1','R1']:
                 if key in self.data[self.position]:
@@ -238,6 +216,15 @@ class ResultApp(QWidget):
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)  
 
+    def UndoAction(self):
+        # stackdata=self.stack.top()
+        if len(self.stack)>0:
+            op,self.data,self.position,self.img,self.img1,self.img2=self.stack.pop()
+            return self.position
+        return -1
+
+
+
     def set_file(self,mydict):
         self.data=mydict['data']
         self.mydict=mydict
@@ -245,7 +232,11 @@ class ResultApp(QWidget):
         self.img=self.gen_image()
         self.img1=self.img.copy()
         self.myfoot=set()
-        
+        img = cv2.vconcat([self.img1, self.img])
+        # print(img.shape)
+        qt_img = self.convert_cv_qt(img)
+        self.image_label.setPixmap(qt_img)
+        self.stack=[]
 
     def reset(self):
         self.img=self.gen_image()
@@ -257,9 +248,6 @@ class ResultApp(QWidget):
     def setPosition1(self,position=-1):
         if position==-1:position=self.position
         thickness1=2
-        thickness2=1
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale=5
         for key in ['L','R','L1','R1']:
             if key in self.data[position]:
                 self.myfoot.add(position)
@@ -277,8 +265,10 @@ class ResultApp(QWidget):
                     cv2.line(self.img1, (y1+self.radius,x1), (y1-self.radius,x1), (0,0,255), thickness1)
                 elif key=='R1':
                     cv2.circle(self.img1,(y1,x1), self.radius, (0,0,255), thickness1)
-        
-
+    
+    # self.img: pure gray
+    # self.img1: view with steps - top
+    # self.img2: view for each frame, with overlay - bottom
     def setPosition(self, position):
         self.position=position
         thickness1=2
@@ -289,10 +279,6 @@ class ResultApp(QWidget):
         # print(position)
         if position in self.data:
             self.setPosition1()
-            # print(self.data[position]['3dp'])
-            # self.data[position]['3dp'].sort()
-            # print(self.data[position]['3dp'])
-            # length=len(self.data[position]['3dp'])
             for key in self.data[position]['3dp']:
             # print(k)
                 data1=self.data[position]['3dp'][key]
@@ -315,17 +301,10 @@ class ResultApp(QWidget):
                     y1=(self.original_i+y)*self.rate
                     cur_y=int(y1)
                     cur_key=key[0]
-                    # print(self.data[position][key],cur_y)
-                    # break
         alpha = 0.8  # Transparency factor.
-        # print(
-        #     'set yes'
-        # )
         self.img = cv2.addWeighted(overlay, alpha, self.img, 1 - alpha, 0)
         self.img2 =img1
         img=cv2.vconcat([self.img1,img1])
-        # print(img.shape)
-        # print('cur_y: {}'.format(cur_y))
         rline=2
         if cur_y!=-1:
             if cur_key=='L':
@@ -335,10 +314,6 @@ class ResultApp(QWidget):
 
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
-        # if position+1==self.mydict['duration_off']:
-        #     self.SaveAction()
-        
-            # def draw_frame(self,f):
 
     def select_view(self, img):
         h, w, _ = img.shape

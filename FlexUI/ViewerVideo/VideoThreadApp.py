@@ -42,7 +42,6 @@ class VideoThread(QThread):
         self.cap.set(1,self.curr_frame)
         self.cap_curr_frame=self.curr_frame
         self.data=mydict['data']
-        self.view = [0]
         self.cv_img_mb={}
         # self.duration = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         return self.duration_on,self.duration_off, height_video, width_video
@@ -65,13 +64,8 @@ class VideoThread(QThread):
                 return 
             cv_img=self.box_img(cv_img)
             self.cv_img_mb[self.curr_frame-self.D]=cv_img
-
-        
-        # protractor view
-        if self.view[0]==5:
-            self.cap1.set(1,self.curr_frame*2) 
-            ret, cv_img = self.cap1.read()
         self.last_image = cv_img        
+
         self.change_pixmap_signal.emit(cv_img)
 
         # to the last frame
@@ -172,30 +166,27 @@ class VideoThread(QThread):
                     end_point = (bt[2]+w,bt[3]+h)
 
                     cv_img=cv2.rectangle(cv_img, start_point, end_point, color[key], thickness)
-
-                # for bt in self.data[t]['box'][key]:
-                #     bt=bt.astype('int')
-                #     start_point = (bt[0]+w,bt[1]+h)
-                #     end_point = (bt[2]+w,bt[3]+h)
-
-                #     cv_img=cv2.rectangle(cv_img, start_point, end_point, color, thickness)
         return cv_img
        
     def get_image(self, position, emit_frame=True):
         if self.cap is None: return
         if self.duration_on <= position < self.duration_off:
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, position)
             self.curr_frame = position
-            ret, cv_img = self.cap.read()
-            # print(' # location 124')
-            # print(self.view)
-            if self.view[0]==5:
-                self.cap1.set(1,self.curr_frame*2) 
-                ret, cv_img = self.cap1.read()
+            if self.cap is None: return     
+            if self.curr_frame in self.cv_img_mb:
+                ret,cv_img=True,self.cv_img_mb[self.curr_frame]
             else:
-
-                cv_img =self.box_img(cv_img)
-            self.last_image = cv_img
+                if self.curr_frame!=self.cap_curr_frame:
+                    self.cap.set(1,self.curr_frame)     
+                ret, cv_img = self.cap.read()
+                self.cap_curr_frame=self.curr_frame
+                if not ret:
+                    print('Error1-7ea5f38b078ac28e434f25c9468509148a7527ba')
+                    return 
+            cv_img=self.box_img(cv_img)
+            self.cv_img_mb[self.curr_frame-self.D]=cv_img
+            self.last_image = cv_img        
+            
             if not ret: return
             self.change_pixmap_signal.emit(cv_img)
             if emit_frame: self.frame_id.emit(self.curr_frame)
