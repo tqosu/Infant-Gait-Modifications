@@ -44,6 +44,7 @@ class ResultApp(QWidget):
         self.resize(display_width, display_height)
         self.setPosition(self.position)
 
+
     def gen_image(self):
         if self.slbr=='Bridge':
             rate=self.rate
@@ -109,7 +110,10 @@ class ResultApp(QWidget):
             theta=angle/180*math.pi
             cos=math.cos(theta)
             L=38
-            adjac=L*cos
+            self.L=L
+            self.adjac=L*cos
+            self.cos=cos
+            adjac=L#*cos
 
             a=int((60+adjac+32)*rate)
             img = np.zeros((30*rate,a,3), np.uint8)+255
@@ -237,6 +241,8 @@ class ResultApp(QWidget):
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
         self.stack=[]
+        self.setWindowTitle("A Top-down View | {}".format(self.mydict['angle'])) 
+
 
     def reset(self):
         self.img=self.gen_image()
@@ -245,6 +251,20 @@ class ResultApp(QWidget):
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
     
+    def gen_y(self,y):
+        if self.slbr=='Bridge':return y
+        else:
+            y1=self.original_i-40
+            y2=y1+self.adjac
+            if y<=y1:
+                return y
+            elif y<=y2:
+                return y1+(y-y1)/self.cos
+            else:
+                return y1+self.L+(y-y2)
+        
+
+
     def setPosition1(self,position=-1):
         if position==-1:position=self.position
         thickness1=2
@@ -253,7 +273,7 @@ class ResultApp(QWidget):
                 self.myfoot.add(position)
                 x,y,z=self.data[position][key]
                 # print(x,y,z)
-                y1,x1=(self.original_i+y)*self.rate,x*self.rate
+                y1,x1=self.gen_y(self.original_i+y)*self.rate,x*self.rate
                 y1,x1=int(y1),int(x1)
                 if key=='L':
                     cv2.circle(self.img1,(y1,x1), self.radius, (255,0,0), thickness1)
@@ -284,7 +304,7 @@ class ResultApp(QWidget):
                 data1=self.data[position]['3dp'][key]
                 x,y,z=data1
                 # print(x,y,z)
-                y1,x1=(self.original_i+y)*self.rate,x*self.rate
+                y1,x1=self.gen_y(self.original_i+y)*self.rate,x*self.rate
                 y1,x1=int(y1),int(x1)
                 
                 cv2.circle(self.img,(y1,x1), self.radius, (0,0,0), thickness1)
@@ -298,7 +318,7 @@ class ResultApp(QWidget):
             for key in ['L','R','L1','R1']:
                 if key in self.data[position]:
                     x,y,z=self.data[position][key]
-                    y1=(self.original_i+y)*self.rate
+                    y1=self.gen_y(self.original_i+y)*self.rate
                     cur_y=int(y1)
                     cur_key=key[0]
         alpha = 0.8  # Transparency factor.

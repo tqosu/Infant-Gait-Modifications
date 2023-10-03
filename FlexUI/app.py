@@ -48,7 +48,7 @@ class VideoWindow(QMainWindow):
         self.slope_or_bridge=text[0].lower()
         self.dataframe2=self.dataframe1.loc[self.dataframe1['slope_or_bridge']==self.slope_or_bridge]
         
-        set_a=list(set(self.dataframe2['total_trial_num'].tolist()))
+        # set_a=list(set(self.dataframe2['total_trial_num'].tolist()))
         self.trnu_combo.clear()
         slbr=self.slbr_combo.currentText()
 
@@ -67,7 +67,11 @@ class VideoWindow(QMainWindow):
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
 
         print(path3)
-        for idx in set_a:
+        for _, row in self.dataframe2.iterrows():
+            # print(row)
+            idx=row['total_trial_num']
+            trial_increment=row['trial_increment']
+        # for idx in set_a:
             int_idx=int(idx)
             # print(self.dataframe3.index)
             if int_idx in self.dataframe3.index:
@@ -80,7 +84,7 @@ class VideoWindow(QMainWindow):
             else: 
                 padding=' '
                 # self.mydict['angle']=-1
-            self.trnu_combo.addItem(padding+str(idx).zfill(2))
+            self.trnu_combo.addItem(padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2))
 
     # path3 is always user's
     # path2 change to user's when saving 
@@ -90,7 +94,7 @@ class VideoWindow(QMainWindow):
         self.viewMenu2.setEnabled(True)
         user_path='User/'+self.user_combo.currentText()+'/'
 
-        text=text[1:]
+        text=text[1:].split(' | ')[0]
         slbr=self.slbr_combo.currentText()
         # self.slbr_combo_onActivated(slbr)
         # print(self.subj,slbr,text)
