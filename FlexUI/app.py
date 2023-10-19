@@ -92,6 +92,7 @@ class VideoWindow(QMainWindow):
     def trnu_combo_onActivated(self,text):
         self.viewMenu1.setEnabled(True)
         self.viewMenu2.setEnabled(True)
+        self.viewMenu3.setEnabled(True)
         user_path='User/'+self.user_combo.currentText()+'/'
 
         text=text[1:].split(' | ')[0]
@@ -209,7 +210,11 @@ class VideoWindow(QMainWindow):
         self.TrialButton = QPushButton("", self)
         self.TrialButton.setEnabled(True)
         self.TrialButton.setIcon(QIcon('./icons/TrialButton.png'))
+        self.TrialButton.enterEvent=lambda event: self.show_message("Go To The Next Trial | Key_9")
+        self.TrialButton.leaveEvent = self.clear_message
+        self.TrialButton.setShortcut(Qt.Key_9)
         self.TrialButton.clicked.connect(self.TrialAction)
+
 
         self.LeftButton = QPushButton("&Left", self)
         self.LeftButton.setEnabled(True)
@@ -236,6 +241,7 @@ class VideoWindow(QMainWindow):
         self.PrevButton.enterEvent=lambda event: self.show_message("Previous Step | Key_Left")
         self.PrevButton.leaveEvent = self.clear_message
         self.PrevButton.clicked.connect(self.PrevAction)
+
 
         self.NextButton = QPushButton("&Next", self)
         self.NextButton.setEnabled(True)
@@ -264,11 +270,16 @@ class VideoWindow(QMainWindow):
         self.SaveButton = QPushButton("&CSave", self)
         self.SaveButton.setEnabled(True)
         self.SaveButton.setIcon(QIcon('./icons/SaveButton.png'))
+        self.SaveButton.enterEvent=lambda event: self.show_message("Complete Save | *")
+        self.SaveButton.leaveEvent = self.clear_message
+        self.SaveButton.setShortcut('*')
         self.SaveButton.clicked.connect(partial(self.SaveAction,0))
 
         self.PSaveButton = QPushButton("&PSave", self)
         self.PSaveButton.setEnabled(True)
         self.PSaveButton.setIcon(QIcon('./icons/PSaveButton.png'))
+        self.PSaveButton.enterEvent=lambda event: self.show_message("Partial Auto Save")
+        self.PSaveButton.leaveEvent = self.clear_message
         self.PSaveButton.clicked.connect(partial(self.SaveAction,1))
 
         self.UndoButton = QPushButton("&Undo", self)
@@ -331,13 +342,22 @@ class VideoWindow(QMainWindow):
 
     def RightAction(self):
         self.main3Dviewer.AddAction('R')
+
+    
     
     def PrevAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
         self.setPosition(position)
         self.mediaPlayer.showImage()
-        
+    
+    def ToStartActionF(self):
+        print("immediately takes you to the start of the trial")
+        self.sliderPause()
+        # position = self.mediaPlayer.duration_on
+        self.setPosition(self.mediaPlayer.duration_on)
+        self.mediaPlayer.showImage()
+
     def NextAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
@@ -432,8 +452,6 @@ class VideoWindow(QMainWindow):
         self.action_menu_aux.setStatusTip('Show foot location for each frame')
         self.viewMenu2.addAction(self.action_menu_aux)
 
-
-
         self.action_menu_vtl = QAction('&Vertical', self, checkable=True)        
         self.action_menu_vtl.setChecked(False)
         # self.action_menu_vtl.setData(1)
@@ -443,8 +461,28 @@ class VideoWindow(QMainWindow):
         # action.triggered.connect(self.viewSelect)
         # self.viewAction.append(action)
 
+        self.viewMenu3 = menuBar.addMenu('&Action')
+        # self.ToStartAction = QAction("ToStartAction", self)
+        self.viewAction3=[]
+        action = QAction('&ToStart')        
+        action.setShortcut(Qt.Key_Plus)
+        action.triggered.connect(self.ToStartActionF)
+        action.setStatusTip('To the start of the trial | Key_Plus')
+        self.viewAction3.append(action)
+        
+
+        action = QAction('&Reverse Play, 0.5X Speed')        
+        action.setShortcut(Qt.Key_7)
+        action.setStatusTip("Reverse Play, 0.5X Speed | Key_4")
+        action.triggered.connect(lambda: self.play(1,-1))
+        self.viewAction3.append(action)
+        for i in range(len(self.viewAction3)):
+            self.viewMenu3.addAction(self.viewAction3[i])
+
+
         self.viewMenu1.setEnabled(False)
         self.viewMenu2.setEnabled(False)
+        self.viewMenu3.setEnabled(False)
     def viewSelect2(self):
         self.mediaPlayer.stop_video()
         self.main3Dviewer.action_menu_aux=self.action_menu_aux.isChecked()
@@ -493,6 +531,10 @@ class VideoWindow(QMainWindow):
         self.main3Dviewer = ResultApp()
         # self.main3Dviewer.frame_id.connect(self.setPosition)
 
+        
+
+        
+        # self.PrevButton.clicked.connect(self.PrevAction)
         # Button
         self.playButton = QPushButton()
         self.playButton.setEnabled(False)

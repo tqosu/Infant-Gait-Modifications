@@ -90,14 +90,16 @@ class VideoThread(QThread):
             if self._run_flag:
                 # self.cap.set(1,self.curr_frame)
                 if self.curr_frame in self.cv_img_mb:
+                    # print('if',self.D,self.curr_frame, self.cap_curr_frame)
                     ret,cv_img=True,self.cv_img_mb[self.curr_frame]
                     self.curr_frame+=self.D
                 else:
+                    # print('else',self.D,self.curr_frame, self.cap_curr_frame)
                     if self.curr_frame!=self.cap_curr_frame:
                         self.cap.set(1,self.curr_frame)     
                     ret, cv_img = self.cap.read()
+                    self.cap_curr_frame=self.curr_frame+1
                     self.curr_frame+=self.D
-                    self.cap_curr_frame=self.curr_frame
                     if not ret:
                         print('Error1-7ea5f38b078ac28e434f25c9468509148a7527ba')
                         break
@@ -115,15 +117,23 @@ class VideoThread(QThread):
                 time.sleep(1/self.fps/self.S)
                 # to the last frame
                 if self.D>0:
-                    if self.curr_frame>self.duration_off:
+                    if self.curr_frame>=self.duration_off:
                         self.curr_frame = self.duration_on
-                        self.cap.set(1,self.curr_frame) 
+                        # self.cap.set(1,self.curr_frame) 
                         self.cap_curr_frame=self.curr_frame
                 else:
                     if self.curr_frame<self.duration_on:
-                        self.curr_frame = self.duration_off
-                        self.cap.set(1,self.curr_frame) 
-                        self.cap_curr_frame=self.curr_frame
+                        # self.curr_frame1 = self.duration_off
+                        self.curr_frame=self.cap_curr_frame
+                        while self.curr_frame<self.duration_off:
+                            ret, cv_img = self.cap.read()
+                            cv_img=self.box_img(cv_img)
+                            self.cv_img_mb[self.curr_frame]=cv_img
+                            self.cap_curr_frame+=1
+                            self.curr_frame=self.cap_curr_frame
+
+                        # self.cap.set(1,self.curr_frame) 
+                        # self.cap_curr_frame=self.curr_frame
                 
                 self.frame_id.emit(self.curr_frame)
             else: break
