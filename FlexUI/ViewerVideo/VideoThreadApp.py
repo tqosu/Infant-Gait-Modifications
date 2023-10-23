@@ -131,6 +131,7 @@ class VideoThread(QThread):
                             self.cv_img_mb[self.curr_frame]=cv_img
                             self.cap_curr_frame+=1
                             self.curr_frame=self.cap_curr_frame
+                        
 
                         # self.cap.set(1,self.curr_frame) 
                         # self.cap_curr_frame=self.curr_frame

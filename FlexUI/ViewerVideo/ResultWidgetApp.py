@@ -245,6 +245,7 @@ class ResultApp(QWidget):
 
 
     def reset(self):
+        self.myfoot=set()
         self.img=self.gen_image()
         self.img1=self.img.copy()
         img = cv2.vconcat([self.img1, self.img])
