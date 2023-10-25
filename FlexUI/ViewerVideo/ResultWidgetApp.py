@@ -50,7 +50,7 @@ class ResultApp(QWidget):
             rate=self.rate
             x1,x2=self.mydict['x1'],self.mydict['x2']
             # x1,x2=args.x1,args.x2
-
+            
             img = np.zeros((30*rate,140*rate,3), np.uint8)+255
             original_i=100
             cv2.rectangle(img,((original_i-100)*rate,0),((original_i-30)*rate,30*rate),(157,163,110),-1)
@@ -94,6 +94,71 @@ class ResultApp(QWidget):
                 end_point=(a,30*rate)
                 img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
                 cnt+=1
+
+            img [0,:,:]=(255,255,255)
+            self.original_i=original_i
+            self.rate=rate
+            self.radius=1*rate
+            # self.radius2=*rate
+        elif self.slbr=='Gaps':
+            rate=self.rate
+            # x1,x2=self.mydict['x1'],self.mydict['x2']
+            # length=self.mydict['angle']*0.393701
+            length=self.mydict['angle']*0.4
+            # x1,x2=args.x1,args.x2
+
+            
+            original_i=100-30+length
+            y=(140-30+length)*rate
+            y=int(y)
+            print(140-30+length)
+            img = np.zeros((30*rate,y,3), np.uint8)+255
+
+            y0=(original_i-length-70)*rate
+            y1=(original_i-length)*rate
+            y0,y1=int(y0),int(y1)
+            cv2.rectangle(img,(y0,0),(y1,30*rate),(157,163,110),-1)
+            y0=original_i*rate
+            y1=(original_i+40)*rate
+            y0,y1=int(y0),int(y1)
+            cv2.rectangle(img,(y0,0),(y1,30*rate),(157,163,110),-1)
+
+           
+            thickness=1
+            csle=130
+            colors=[(csle,csle,csle) for i in range(5)]
+            cnt=0
+            i=-2
+            while i>-50:
+                a=int((original_i-i)*rate)
+                start_point=(a,0*rate)
+                end_point=(a,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+                i-=2
+            colors.reverse()
+
+            cnt=1
+            i=length
+            while i<length+70:
+                a=int((original_i-i)*rate)
+                start_point=(a,0*rate)
+                end_point=(a,30*rate)
+                img = cv2.line(img, start_point, end_point, colors[cnt%5], thickness)
+                cnt+=1
+                i+=2
+            
+            # gap
+            a=int((original_i)*rate)
+            start_point=(a,0*rate)
+            end_point=(a,30*rate)
+            img = cv2.line(img, start_point, end_point, (0,0,0), thickness)
+
+            a=int((original_i-length)*rate)
+            start_point=(a,0*rate)
+            end_point=(a,30*rate)
+            img = cv2.line(img, start_point, end_point, (0,0,0), thickness)
+            # gap end
 
             img [0,:,:]=(255,255,255)
             self.original_i=original_i
@@ -253,7 +318,7 @@ class ResultApp(QWidget):
         self.image_label.setPixmap(qt_img)
     
     def gen_y(self,y):
-        if self.slbr=='Bridge':return y
+        if self.slbr[0]=='B' or self.slbr[0]=='G':return y
         else:
             y1=self.original_i-40
             y2=y1+self.adjac

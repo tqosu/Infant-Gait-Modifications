@@ -33,12 +33,14 @@ class VideoWindow(QMainWindow):
         int_subj=int(text[1:])
         self.dataframe1=self.dataframe.loc[self.dataframe['subj']==int_subj]
         
-        set_a=set(self.dataframe['slope_or_bridge'].tolist())
+        set_a=set(self.dataframe1['slope_or_bridge'].tolist())
         set_a=sorted(list(set_a))
         self.slbr_combo.clear()
         for sb in set_a:
             if sb =='s':
                 self.slbr_combo.addItem('Slope')
+            elif sb =='g':
+                self.slbr_combo.addItem('Gaps')
             else:
                 self.slbr_combo.addItem('Bridge')
         self.slope_or_bridge=self.slbr_combo.currentText()
@@ -123,8 +125,11 @@ class VideoWindow(QMainWindow):
         
         os.makedirs(user_path, exist_ok=True)
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
-
+    # try:
         data=np.load(path2, allow_pickle=True)
+        # except:
+            
+
         data=data.item()['data']
 
         int_idx=int(text)
@@ -185,13 +190,16 @@ class VideoWindow(QMainWindow):
 
     def prepare_trials(self):
         # self.dataframe=pd.read_csv('Flex.csv')
-        self.dataframe=pd.read_csv('Flex_0919.csv')
+        # self.dataframe=pd.read_csv('Flex_0919.csv')
+        self.dataframe=pd.read_csv('Flex_1023.csv')
         
         self.user_combo = QComboBox(self)
-        self.user_combo.addItem('Tieqiao')
-        self.user_combo.addItem('Alice')
-        self.user_combo.addItem('Bob')
         self.user_combo.addItem('Christina')
+        self.user_combo.addItem('Eva')
+        self.user_combo.addItem('Lily')
+        self.user_combo.addItem('Tieqiao')
+        self.user_combo.addItem('Yasmine')
+        # self.user_combo.addItem('Bob')
         self.user_combo.textActivated[str].connect(self.user_combo_onActivated)
 
         self.subject_combo = QComboBox(self)
