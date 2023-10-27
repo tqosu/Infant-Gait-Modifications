@@ -118,11 +118,13 @@ class VideoThread(QThread):
                 # to the last frame
                 if self.D>0:
                     if self.curr_frame>=self.duration_off:
+                        break
                         self.curr_frame = self.duration_on
                         # self.cap.set(1,self.curr_frame) 
                         self.cap_curr_frame=self.curr_frame
                 else:
                     if self.curr_frame<self.duration_on:
+                        break
                         # self.curr_frame1 = self.duration_off
                         self.curr_frame=self.cap_curr_frame
                         while self.curr_frame<self.duration_off:

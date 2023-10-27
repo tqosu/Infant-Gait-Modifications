@@ -479,9 +479,9 @@ class VideoWindow(QMainWindow):
         self.viewAction3.append(action)
         
 
-        action = QAction('&Reverse Play, 0.5X Speed')        
+        action = QAction('&Reverse Play, 1.0X Speed')        
         action.setShortcut(Qt.Key_7)
-        action.setStatusTip("Reverse Play, 0.5X Speed | Key_4")
+        action.setStatusTip("Reverse Play, 1.0X Speed | Key_7")
         action.triggered.connect(lambda: self.play(1,-1))
         self.viewAction3.append(action)
         for i in range(len(self.viewAction3)):
