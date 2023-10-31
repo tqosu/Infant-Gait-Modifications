@@ -70,15 +70,13 @@ class VideoThread(QThread):
 
         # to the last frame
         if D>0:
-            if self.curr_frame>self.duration_off:
-                self.curr_frame = self.duration_on
-                self.cap.set(1,self.curr_frame) 
-                self.cap_curr_frame=self.curr_frame
+            if self.curr_frame>=self.duration_off:
+                self.curr_frame = self.duration_off-1
+                # self.cap_curr_frame=self.curr_frame
         else:
             if self.curr_frame<self.duration_on:
-                self.curr_frame = self.duration_off
-                self.cap.set(1,self.curr_frame) 
-                self.cap_curr_frame=self.curr_frame
+                self.curr_frame = self.duration_on
+                # self.cap_curr_frame=self.curr_frame
         
         self.frame_id.emit(self.curr_frame)
  
@@ -93,6 +91,7 @@ class VideoThread(QThread):
                     # print('if',self.D,self.curr_frame, self.cap_curr_frame)
                     ret,cv_img=True,self.cv_img_mb[self.curr_frame]
                     self.curr_frame+=self.D
+                    time.sleep(1/self.fps/self.S)
                 else:
                     # print('else',self.D,self.curr_frame, self.cap_curr_frame)
                     if self.curr_frame!=self.cap_curr_frame:
@@ -114,29 +113,16 @@ class VideoThread(QThread):
                 self.last_image = cv_img        
                 self.change_pixmap_signal.emit(cv_img)
 
-                time.sleep(1/self.fps/self.S)
+               
                 # to the last frame
                 if self.D>0:
                     if self.curr_frame>=self.duration_off:
+                        self.curr_frame=self.duration_off-1
                         break
-                        self.curr_frame = self.duration_on
-                        # self.cap.set(1,self.curr_frame) 
-                        self.cap_curr_frame=self.curr_frame
                 else:
                     if self.curr_frame<self.duration_on:
+                        self.curr_frame=self.duration_on
                         break
-                        # self.curr_frame1 = self.duration_off
-                        self.curr_frame=self.cap_curr_frame
-                        while self.curr_frame<self.duration_off:
-                            ret, cv_img = self.cap.read()
-                            cv_img=self.box_img(cv_img)
-                            self.cv_img_mb[self.curr_frame]=cv_img
-                            self.cap_curr_frame+=1
-                            self.curr_frame=self.cap_curr_frame
-                        
-
-                        # self.cap.set(1,self.curr_frame) 
-                        # self.cap_curr_frame=self.curr_frame
                 
                 self.frame_id.emit(self.curr_frame)
             else: break
