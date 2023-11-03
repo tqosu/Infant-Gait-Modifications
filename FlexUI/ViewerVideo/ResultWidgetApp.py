@@ -239,7 +239,7 @@ class ResultApp(QWidget):
         return self.position
     
     def AddAction(self,key):
-        stackdata=['A',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
+        stackdata=['A',copy.deepcopy(self.data),self.position,self.img,copy.deepcopy(self.img1),self.img2]
         self.stack.append(stackdata)
         self.data[self.position][key]=self.data[self.position]['3dp'][key]
         self.setPosition1()
@@ -267,6 +267,7 @@ class ResultApp(QWidget):
         # print(self.position)
         print('save_action')
         np.save(self.mydict['path_data_sv'], mydata, allow_pickle=True)
+        self.stack=[]
 
     def RemoveAction(self):
         stackdata=['R',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
@@ -391,6 +392,7 @@ class ResultApp(QWidget):
         self.img = cv2.addWeighted(overlay, alpha, self.img, 1 - alpha, 0)
         self.img2 =img1
         img=cv2.vconcat([self.img1,img1])
+
         rline=2
         if cur_y!=-1:
             if cur_key=='L':

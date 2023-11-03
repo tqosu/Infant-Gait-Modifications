@@ -190,8 +190,8 @@ class VideoWindow(QMainWindow):
 
     def prepare_trials(self):
         # self.dataframe=pd.read_csv('Flex.csv')
-        # self.dataframe=pd.read_csv('Flex_0919.csv')
-        self.dataframe=pd.read_csv('Flex_1023.csv')
+        self.dataframe=pd.read_csv('Flex_0919.csv')
+        # self.dataframe=pd.read_csv('Flex_1023.csv')
         
         self.user_combo = QComboBox(self)
         self.user_combo.addItem('Christina')
@@ -314,8 +314,10 @@ class VideoWindow(QMainWindow):
         if index_to_replace != -1:
             self.trnu_combo.setItemText(index_to_replace, text)  # Replace the item text
 
-
+    # 0 complete
+    # 1 part
     def SaveAction(self,part=0):
+        
         self.sliderPause()
         mydict=self.mydict
         self.dataframe3.loc[int(self.mydict['trnu'])] =\
@@ -727,7 +729,10 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer.setPosition(position)
         self.main3Dviewer.setPosition(position)
         if position+1==self.main3Dviewer.mydict['duration_off']:
-            self.SaveAction(part=1)
+            if int(self.mydict['trnu']) in self.dataframe3.index and len(self.main3Dviewer.stack)==0:
+                pass
+            else:
+                self.SaveAction(part=1)
         # self.main3Dviewer.draw_frame(position, plot_vec = True)
 
     
