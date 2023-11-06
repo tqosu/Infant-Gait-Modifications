@@ -108,7 +108,7 @@ class VideoWindow(QMainWindow):
         # else:
         #     self.Protractor.setEnabled(False)
             # self.PLine.setEnabled(False)
-        fileName = './Flex/dataset2/2021_Flex1_{}_{}_MCH.mp4'.format(info[0],info[2])
+        fileName = './Flex/dataset3/2021_Flex1_{}_{}_MCH.mp4'.format(info[0],info[2])
         fileName1 = './Flex/dataset/2021_Flex1_{}_SlopeProtractor.mp4'.format(info[0])
 
         # mixed view offset
@@ -120,7 +120,7 @@ class VideoWindow(QMainWindow):
         offset=data1['start_time_seconds']
 
         pathdata='2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
-        path2='./Flex/box6_3/'+pathdata
+        path2='./Flex/box6_4/'+pathdata
         path2sv=user_path+pathdata
         
         os.makedirs(user_path, exist_ok=True)
@@ -139,7 +139,6 @@ class VideoWindow(QMainWindow):
             print(path2)
             data=np.load(path2, allow_pickle=True)
             data=data.item()['data']
-
         #     path2=path2sv
         #     self.mydict['angle']=self.dataframe3.loc[int_idx]['angle']
         #     # if self.mydict['angle']!=-1:
