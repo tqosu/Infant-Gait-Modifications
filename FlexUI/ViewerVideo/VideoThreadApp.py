@@ -104,7 +104,7 @@ class VideoThread(QThread):
                         break
                     cv_img=self.box_img(cv_img)
                     self.cv_img_mb[self.curr_frame-self.D]=cv_img
-                    time.sleep(1/self.fps/self.S*0.9)
+                    time.sleep(1/self.fps/self.S*0.7)
                 
                 # protractor view
                 if self.view[0]==5:

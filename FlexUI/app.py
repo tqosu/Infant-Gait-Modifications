@@ -86,7 +86,7 @@ class VideoWindow(QMainWindow):
             else: 
                 padding=' '
                 # self.mydict['angle']=-1
-            self.trnu_combo.addItem(padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2))
+            self.trnu_combo.addItem(padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2)+' | '+row['trial_type'])
 
     # path3 is always user's
     # path2 change to user's when saving 
