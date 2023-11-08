@@ -67,7 +67,14 @@ class VideoWindow(QMainWindow):
                'bridge_l':float, 'bridge_r':float,'partial':bool}
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
-
+        path4='FootBox.csv'
+        if os.path.isfile(path4):
+            self.dataframe4=pd.read_csv(path4)
+            self.dataframe4=self.dataframe4.drop_duplicates()
+        else:
+            columns_with_dtypes={'subj': int, 'slope_or_bridge': str, 'total_trial_num':int, 'frame':int}
+            self.dataframe4=pd.DataFrame(columns=columns_with_dtypes)
+            
         print(path3)
         for _, row in self.dataframe2.iterrows():
             # print(row)
@@ -134,9 +141,9 @@ class VideoWindow(QMainWindow):
 
         int_idx=int(text)
         if int_idx in self.dataframe3.index:
-            print(" # location 1")
+            # print(" # location 1")
             path2=path2sv
-            print(path2)
+            # print(path2)
             data=np.load(path2, allow_pickle=True)
             data=data.item()['data']
         #     path2=path2sv
@@ -367,6 +374,28 @@ class VideoWindow(QMainWindow):
         self.setPosition(self.mediaPlayer.duration_on)
         self.mediaPlayer.showImage()
 
+    def Box_Frame_Action(self):
+        insert_row=[self.mydict['subj'],self.mydict['slbr'],\
+               self.mydict['trnu'],self.mediaPlayer.thread.curr_frame]
+        self.dataframe4.loc[len(self.dataframe4)] \
+            = insert_row
+        # print('Insert Row')
+        print(insert_row)
+        self.dataframe4.to_csv('FootBox.csv', index=False)
+        # print()
+        # print("immediately takes you to the start of the trial")
+        # self.sliderPause()
+        # # position = self.mediaPlayer.duration_on
+        # self.setPosition(self.mediaPlayer.duration_on)
+        # self.mediaPlayer.showImage()
+
+    def Boxes_On(self):
+        # print("immediately takes you to the start of the trial")
+        # self.sliderPause()
+        # position = self.mediaPlayer.duration_on
+        # self.setPosition(self.mediaPlayer.duration_on)
+        self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
+
     def NextAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
@@ -485,6 +514,17 @@ class VideoWindow(QMainWindow):
         action.setStatusTip("Reverse Play, 1.0X Speed | Key_7")
         action.triggered.connect(lambda: self.play(1,-1))
         self.viewAction3.append(action)
+
+        action = QAction('&Wrong Box Frame')        
+        action.setShortcut(Qt.Key_F)
+        action.setStatusTip("Wrong Box Frame | Key_F")
+        action.triggered.connect(self.Box_Frame_Action)
+        self.viewAction3.append(action)
+        # action = QAction('&Boxes on and off')        
+        # action.setStatusTip("Boxes on and off")
+        # action.triggered.connect(self.Boxes_On)
+        # self.viewAction3.append(action)
+
         for i in range(len(self.viewAction3)):
             self.viewMenu3.addAction(self.viewAction3[i])
 

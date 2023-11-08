@@ -43,6 +43,7 @@ class VideoThread(QThread):
         self.cap_curr_frame=self.curr_frame
         self.data=mydict['data']
         self.cv_img_mb={}
+        self.boxes_on=True
         # self.duration = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         return self.duration_on,self.duration_off, height_video, width_video
 
