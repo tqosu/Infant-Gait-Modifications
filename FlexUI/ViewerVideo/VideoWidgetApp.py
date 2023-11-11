@@ -84,6 +84,7 @@ class VideoApp(QWidget):
         second = position//self.thread.fps
         self.textLabel.setText("Time: {:.0f}:{:.0f} \t-\t Frame: {}".format(second//60, second % 60, position))
         self.last_position = position
+        # self.showImage()
         return
 
     def update_last_image(self):

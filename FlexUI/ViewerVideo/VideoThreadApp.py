@@ -3,6 +3,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 import cv2
 import time
+# from ..app_helper import camera
 
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
@@ -33,6 +34,9 @@ class VideoThread(QThread):
         width_video = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height_video = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.h,self.w=int(height_video/2),int(width_video/2)
+        mydict['h'],mydict['w']=self.h,self.w
+        # self.camera=camera(mydict)
+        # print(self.h,self.w)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
         self.S=1
         self.D=1
@@ -40,7 +44,7 @@ class VideoThread(QThread):
         self.duration_off= int(self.fps*mydict['off']) 
         self.curr_frame = self.duration_on
         self.cap.set(1,self.curr_frame)
-        self.cap_curr_frame=self.curr_frame
+        self.cap_curr_frame=self.curr_frame+1
         self.data=mydict['data']
         self.cv_img_mb={}
         self.boxes_on=True
@@ -48,74 +52,56 @@ class VideoThread(QThread):
         return self.duration_on,self.duration_off, height_video, width_video
 
     def run_one(self,D):
-      
+        # print('# location 3')
+        self.curr_frame+=D
         if self.cap is None: return     
-        if self.curr_frame+D in self.cv_img_mb:
-            ret,cv_img=True,self.cv_img_mb[self.curr_frame+D]
-            self.curr_frame+=D
-            # self.cap.set(1,self.curr_frame)
+        if self.curr_frame in self.cv_img_mb:
+            ret,cv_img=True,self.cv_img_mb[self.curr_frame]
         else:
             if self.curr_frame!=self.cap_curr_frame:
                 self.cap.set(1,self.curr_frame)     
+            self.cap_curr_frame=self.curr_frame+1
             ret, cv_img = self.cap.read()
-            self.curr_frame+=self.D
-            self.cap_curr_frame=self.curr_frame
-            if not ret:
-                print('Error1-7ea5f38b078ac28e434f25c9468509148a7527ba')
-                return 
-            cv_img=self.box_img(cv_img)
-            self.cv_img_mb[self.curr_frame-self.D]=cv_img
+            self.cv_img_mb[self.curr_frame]=cv_img
+            
+        cv_img=self.box_img(np.copy(cv_img))
+            
         self.last_image = cv_img        
-
         self.change_pixmap_signal.emit(cv_img)
 
         # to the last frame
         if D>0:
             if self.curr_frame>=self.duration_off:
                 self.curr_frame = self.duration_off-1
-                # self.cap_curr_frame=self.curr_frame
         else:
             if self.curr_frame<self.duration_on:
                 self.curr_frame = self.duration_on
-                # self.cap_curr_frame=self.curr_frame
         
         self.frame_id.emit(self.curr_frame)
  
     # play video and replay it after reaching the end
     def run(self):
+        # print('# location 2')
         while 1:
+            self.curr_frame+=self.D
             if self.cap is None: break
-            # print(self.S,self.D)
             if self._run_flag:
-                # self.cap.set(1,self.curr_frame)
                 if self.curr_frame in self.cv_img_mb:
-                    # print('if',self.D,self.curr_frame, self.cap_curr_frame)
                     ret,cv_img=True,self.cv_img_mb[self.curr_frame]
-                    self.curr_frame+=self.D
                     time.sleep(1/self.fps/self.S)
                 else:
                     # print('else',self.D,self.curr_frame, self.cap_curr_frame)
                     if self.curr_frame!=self.cap_curr_frame:
                         self.cap.set(1,self.curr_frame)     
-                    ret, cv_img = self.cap.read()
                     self.cap_curr_frame=self.curr_frame+1
-                    self.curr_frame+=self.D
-                    if not ret:
-                        print('Error1-7ea5f38b078ac28e434f25c9468509148a7527ba')
-                        break
-                    cv_img=self.box_img(cv_img)
-                    self.cv_img_mb[self.curr_frame-self.D]=cv_img
+                    ret, cv_img = self.cap.read()
+                    self.cv_img_mb[self.curr_frame]=cv_img
                     time.sleep(1/self.fps/self.S*0.7)
-                
-                # protractor view
-                if self.view[0]==5:
-                    self.cap1.set(1,self.curr_frame*2) 
-                    ret, cv_img = self.cap1.read()
+
+                cv_img=self.box_img(np.copy(cv_img))
                 self.last_image = cv_img        
                 self.change_pixmap_signal.emit(cv_img)
 
-               
-                # to the last frame
                 if self.D>0:
                     if self.curr_frame>=self.duration_off:
                         self.curr_frame=self.duration_off-1
@@ -138,6 +124,7 @@ class VideoThread(QThread):
         if emit_frame: self.frame_id.emit(self.curr_frame)
     
     def box_img(self,cv_img):
+        if not self.boxes_on:return cv_img
         h,w=self.h,self.w
         t=self.curr_frame
         # color = (0, 255, 0)
@@ -169,6 +156,7 @@ class VideoThread(QThread):
         return cv_img
        
     def get_image(self, position, emit_frame=True):
+        # print("#location 1")
         if self.cap is None: return
         if self.duration_on <= position < self.duration_off:
             self.curr_frame = position
@@ -179,12 +167,11 @@ class VideoThread(QThread):
                 if self.curr_frame!=self.cap_curr_frame:
                     self.cap.set(1,self.curr_frame)     
                 ret, cv_img = self.cap.read()
-                self.cap_curr_frame=self.curr_frame
-                if not ret:
-                    print('Error1-7ea5f38b078ac28e434f25c9468509148a7527ba')
-                    return 
+                self.cv_img_mb[self.curr_frame]=np.copy(cv_img)
+                self.cap_curr_frame=self.curr_frame+1
+                
             cv_img=self.box_img(cv_img)
-            self.cv_img_mb[self.curr_frame-self.D]=cv_img
+            self.curr_frame+=self.D
             self.last_image = cv_img        
             
             if not ret: return

@@ -363,7 +363,6 @@ class ResultApp(QWidget):
         img1 = self.img.copy()
         cur_y=-1
         cur_key=''
-        # print(position)
         if position in self.data:
             self.setPosition1()
             for key in self.data[position]['3dp']:

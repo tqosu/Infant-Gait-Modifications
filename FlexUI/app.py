@@ -2,7 +2,7 @@ from email.policy import default
 from PyQt5.QtCore import QDir, Qt
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLineEdit, QButtonGroup,
         QPushButton, QSizePolicy, QSlider, QStyle, QVBoxLayout, QWidget,QMessageBox)
-from PyQt5.QtWidgets import QMainWindow,  QAction, QRadioButton, QSplitter, QFrame, QCheckBox, QComboBox
+from PyQt5.QtWidgets import QMainWindow,  QAction, QRadioButton, QSplitter, QFrame, QCheckBox, QComboBox, qApp
 from PyQt5.QtGui import QIcon, QIntValidator,  QKeySequence
 
 import sys,json,os
@@ -14,6 +14,10 @@ from collections import defaultdict
 import numpy as np
 from functools import partial
 from pathlib import Path
+import cv2
+from .app_helper import to_labelme,spoint,camera
+
+
 
 class VideoWindow(QMainWindow):
 
@@ -58,6 +62,7 @@ class VideoWindow(QMainWindow):
 
         user_path='User/'+self.user_combo.currentText()+'/'
         os.makedirs(user_path, exist_ok=True)
+        os.makedirs('FootBox', exist_ok=True)
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
         if os.path.isfile(path3):
             self.dataframe3=pd.read_csv(path3)
@@ -77,12 +82,10 @@ class VideoWindow(QMainWindow):
             
         print(path3)
         for _, row in self.dataframe2.iterrows():
-            # print(row)
             idx=row['total_trial_num']
             trial_increment=row['trial_increment']
         # for idx in set_a:
             int_idx=int(idx)
-            # print(self.dataframe3.index)
             if int_idx in self.dataframe3.index:
                 # print(self.dataframe3.loc[int_idx]['partial'])
                 if self.dataframe3.loc[int_idx]['partial']==True:
@@ -127,7 +130,7 @@ class VideoWindow(QMainWindow):
         offset=data1['start_time_seconds']
 
         pathdata='2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
-        path2='./Flex/box6_4/'+pathdata
+        path2='./Flex/box6_5/'+pathdata
         path2sv=user_path+pathdata
         
         os.makedirs(user_path, exist_ok=True)
@@ -141,7 +144,6 @@ class VideoWindow(QMainWindow):
 
         int_idx=int(text)
         if int_idx in self.dataframe3.index:
-            # print(" # location 1")
             path2=path2sv
             # print(path2)
             data=np.load(path2, allow_pickle=True)
@@ -185,18 +187,31 @@ class VideoWindow(QMainWindow):
         self.mydict['trnu']=text
         self.mydict['path_csv']=path3
         self.mydict['user_path']=user_path
+        
+        if self.slope_or_bridge=='b':
+            if int(self.subj[1:])<30:
+                self.mydict['camera']='./camera/Flex1_S20-Bridge1.npy'
+            else:
+                self.mydict['camera']='./camera/Bridge_0723.npy'
+        elif self.slope_or_bridge=='g':
+            self.mydict['camera']='./camera/Bridge_0723.npy'
+        elif self.slope_or_bridge=='s':
+            self.mydict['camera']='./camera/Slope_0723.npy'
 
         self.setFile()
         if not self.mediaPlayer.isVisible():
             self.mediaPlayer.show()
         if not self.main3Dviewer.isVisible():
             self.main3Dviewer.show()
+        self.cams=camera(self.mydict)
+        # print(self.cams)
         # self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 
 
     def prepare_trials(self):
         # self.dataframe=pd.read_csv('Flex.csv')
-        self.dataframe=pd.read_csv('Flex_0919.csv')
+        self.dataframe=pd.read_csv('Flex_1108.csv')
+        # self.dataframe=pd.read_csv('Flex_0919.csv')
         # self.dataframe=pd.read_csv('Flex_1023.csv')
         
         self.user_combo = QComboBox(self)
@@ -375,25 +390,79 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer.showImage()
 
     def Box_Frame_Action(self):
+        curr_frame=self.mediaPlayer.thread.curr_frame-1
         insert_row=[self.mydict['subj'],self.mydict['slbr'],\
-               self.mydict['trnu'],self.mediaPlayer.thread.curr_frame]
+               self.mydict['trnu'],curr_frame]
         self.dataframe4.loc[len(self.dataframe4)] \
             = insert_row
         # print('Insert Row')
         print(insert_row)
         self.dataframe4.to_csv('FootBox.csv', index=False)
-        # print()
-        # print("immediately takes you to the start of the trial")
-        # self.sliderPause()
-        # # position = self.mediaPlayer.duration_on
-        # self.setPosition(self.mediaPlayer.duration_on)
-        # self.mediaPlayer.showImage()
+        # print(self.mediaPlayer.thread.cv_img_mb.keys())
+        im=self.mediaPlayer.thread.cv_img_mb[curr_frame]
+        h,w,_=im.shape
+        h,w=int(h/2),int(w/2)
+        # cv2.imwrite('FootBox/x.png', im)
+        # im
+        for view in range(4):
+            if view==0:im1=im[:h,:w]
+            elif view==1:im1=im[:h,w:]
+            elif view==2:im1=im[h:,:w]
+            elif view==3:im1=im[h:,w:]
+            
+            mydict={}
+            mydict['save_path']='FootBox/'
+            mydict['img_path']=mydict['save_path']+'{}.png'.format(view)
+            mydict['im']=im1
+            mydict['polys']=[]
+            # img_path=
+            cv2.imwrite(mydict['img_path'], im1)
+            if view in self.mydict['data'][curr_frame]['poly']:
+                mydict['polys']=self.mydict['data'][curr_frame]['poly'][view]
+                # print(type(mydict['polys']))
+            to_labelme(mydict)
+
+    def Box_Frame_Update(self):
+        # curr_frame=self.mediaPlayer.thread.curr_frame-1
+        # self.setPosition(self.mediaPlayer.thread.curr_frame)
+        curr_frame=self.mediaPlayer.thread.curr_frame
+        keymap0={'R':0, 'L':1}
+        keymap1={0:'R', 1:'L'}
+        myres={'box':defaultdict(dict),'poly':defaultdict(dict),'midpoint':defaultdict(dict),'3dp':{}}
+        for view in range(4):
+            with open('FootBox/{}.json'.format(view), 'r') as file:
+                # Load JSON data from the file
+                data = json.load(file)
+            for instance in data['shapes']:
+                key=keymap0[instance['label']]
+                polygon_points=instance['points']
+                # print(polygon_points)
+                # break
+                x_coords, y_coords = zip(*polygon_points)
+
+                # Find the bounding box coordinates
+                min_x, max_x = min(x_coords), max(x_coords)
+                min_y, max_y = min(y_coords), max(y_coords)
+                center_x = (min_x + max_x) / 2
+                center_y = (min_y + max_y) / 2
+
+                # Bounding box points
+                bounding_box = np.array([min_x, min_y,max_x, max_y])
+                midpoint=np.array([center_x,center_y])
+                myres['box'][view][key]=bounding_box
+                myres['poly'][view][key]=polygon_points
+                # print(type(polygon_points))
+                myres['midpoint'][view][key]=midpoint
+        for key in range(2):
+            point=spoint(self.cams,myres['midpoint'],key)
+            if point is not None:
+                key1=keymap1[key]
+                myres['3dp'][key1]=point
+        self.mydict['data'][curr_frame]=myres
+        self.mediaPlayer.thread.run_one(0)
+        
 
     def Boxes_On(self):
-        # print("immediately takes you to the start of the trial")
-        # self.sliderPause()
-        # position = self.mediaPlayer.duration_on
-        # self.setPosition(self.mediaPlayer.duration_on)
         self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
 
     def NextAction(self):
@@ -437,11 +506,6 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer.thread.view = sorted(self.curr_views)
         self.mediaPlayer.showImage() 
 
-    # def PLineChanged(self, text):
-    #     if text!='':
-    #         self.mydict['angle']=float(text)
-    #         print('angle: '+text)
-    #         self.main3Dviewer.set_file(self.mydict)
 
     def show_message(self, message):
         self.statusBar().showMessage(message)
@@ -452,10 +516,7 @@ class VideoWindow(QMainWindow):
 
     def menu_init(self):
         menuBar = self.menuBar()
-        # fileMenu = menuBar.addMenu('&File')
-        # #fileMenu.addAction(newAction)
-        # fileMenu.addAction(openAction)
-        # fileMenu.addAction(exitAction)
+
 
         self.viewAction, self.curr_views = [], [0]
         for i in range(5):
@@ -468,13 +529,6 @@ class VideoWindow(QMainWindow):
             action.setData(i)
             action.triggered.connect(self.viewSelect)
             self.viewAction.append(action)
-    
-        # self.Protractor = QAction('&Protractor', self, checkable=True)       
-        # self.Protractor.setStatusTip('Select Protractor')
-        # self.Protractor.setData(5)
-        # self.Protractor.triggered.connect(self.viewSelect)
-        # self.viewAction.append(self.Protractor)
-
 
         self.viewMenu1 = menuBar.addMenu('&Player')
         for i in range(5):
@@ -515,15 +569,28 @@ class VideoWindow(QMainWindow):
         action.triggered.connect(lambda: self.play(1,-1))
         self.viewAction3.append(action)
 
+        action = QAction('&Boxes on and off', self, checkable=True)      
+        action.setChecked(True)
+        action.setStatusTip("Boxes on and off")
+        action.triggered.connect(self.Boxes_On)
+        self.viewAction3.append(action)
+
         action = QAction('&Wrong Box Frame')        
         action.setShortcut(Qt.Key_F)
         action.setStatusTip("Wrong Box Frame | Key_F")
         action.triggered.connect(self.Box_Frame_Action)
         self.viewAction3.append(action)
-        # action = QAction('&Boxes on and off')        
-        # action.setStatusTip("Boxes on and off")
-        # action.triggered.connect(self.Boxes_On)
-        # self.viewAction3.append(action)
+
+        action = QAction('&Box Frame Update')        
+        action.setStatusTip("Box Frame Update")
+        action.triggered.connect(self.Box_Frame_Update)
+        self.viewAction3.append(action)
+
+        action = QAction('&Exit')        
+        action.setShortcut(Qt.Key_Q)
+        action.setStatusTip("Exit | Key_Q")
+        action.triggered.connect(qApp.quit) 
+        self.viewAction3.append(action)
 
         for i in range(len(self.viewAction3)):
             self.viewMenu3.addAction(self.viewAction3[i])
@@ -576,14 +643,7 @@ class VideoWindow(QMainWindow):
 
         self.mediaPlayer = VideoApp()
         self.mediaPlayer.frame_id.connect(self.setPosition)
-
         self.main3Dviewer = ResultApp()
-        # self.main3Dviewer.frame_id.connect(self.setPosition)
-
-        
-
-        
-        # self.PrevButton.clicked.connect(self.PrevAction)
         # Button
         self.playButton = QPushButton()
         self.playButton.setEnabled(False)
