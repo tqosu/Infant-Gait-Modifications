@@ -210,7 +210,7 @@ class VideoWindow(QMainWindow):
 
     def prepare_trials(self):
         # self.dataframe=pd.read_csv('Flex.csv')
-        self.dataframe=pd.read_csv('Flex_1108.csv')
+        self.dataframe=pd.read_csv('Flex_1111.csv')
         # self.dataframe=pd.read_csv('Flex_0919.csv')
         # self.dataframe=pd.read_csv('Flex_1023.csv')
         
