@@ -14,7 +14,7 @@ from collections import defaultdict
 import numpy as np
 from functools import partial
 from pathlib import Path
-import cv2
+import cv2,math
 from .app_helper import to_labelme,spoint,camera
 
 
@@ -96,6 +96,12 @@ class VideoWindow(QMainWindow):
             else: 
                 padding=' '
                 # self.mydict['angle']=-1
+            if not isinstance(row['trial_type'], str):
+                row['trial_type']=''
+            #     print("The value is NaN")
+            # print(repr(row['trial_type']))
+            # string=padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2)+' | '+row['trial_type']
+            # print(string)
             self.trnu_combo.addItem(padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2)+' | '+row['trial_type'])
 
     # path3 is always user's
@@ -208,9 +214,10 @@ class VideoWindow(QMainWindow):
         # self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 
 
-    def prepare_trials(self):
+    def prepare_trials(self,args):
         # self.dataframe=pd.read_csv('Flex.csv')
-        self.dataframe=pd.read_csv('Flex_1111.csv')
+        print(args.csv_name)
+        self.dataframe=pd.read_csv(args.csv_name)
         # self.dataframe=pd.read_csv('Flex_0919.csv')
         # self.dataframe=pd.read_csv('Flex_1023.csv')
         
@@ -630,13 +637,14 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer.thread.view = sorted(self.curr_views)
         self.mediaPlayer.update_last_image()
 
-    def __init__(self):
+    def __init__(self, args):
         super(VideoWindow, self).__init__()
         self.mydict=defaultdict()
         self.menu_init()
+        # print(args)
         # self.init()
 
-        self.prepare_trials()
+        self.prepare_trials(args)
         self.setWindowTitle("3D Foot Position Correction") 
         self.setWindowIcon(QIcon('./icons/baby-boy.png'))
         self.move(200, 100)
@@ -835,7 +843,7 @@ class VideoWindow(QMainWindow):
         # self.main3Dviewer.draw_frame(position, plot_vec = True)
 
     
-def run():
+def run(args):
     """
     run(video_file=None, att_file=None) function run the GUI for visualizaing video
 
@@ -844,13 +852,14 @@ def run():
     :return: Nothing, the application ends when the GUI is closed
     """ 
     app = QApplication(sys.argv)
-    player = VideoWindow()
+    # args='test_string'
+    player = VideoWindow(args)
     rate=10
     player.resize(120*rate , (10)*rate)
     player.show()
     sys.exit(app.exec_())
 
-if __name__ == "__main__":
-    run()
+# if __name__ == "__main__":
+#     run(args)
 
 
