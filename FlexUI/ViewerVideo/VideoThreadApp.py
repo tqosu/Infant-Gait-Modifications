@@ -48,7 +48,7 @@ class VideoThread(QThread):
         self.data=mydict['data']
         self.cv_img_mb={}
         self.boxes_on=True
-        print(self.duration_on,self.duration_off)
+        # print(self.duration_on,self.duration_off)
         # self.duration = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         return self.duration_on,self.duration_off, height_video, width_video
 
@@ -77,7 +77,7 @@ class VideoThread(QThread):
         else:
             if self.curr_frame<self.duration_on:
                 self.curr_frame = self.duration_on
-        print(self.curr_frame)
+        # print(self.curr_frame)
         self.frame_id.emit(self.curr_frame)
  
     # play video and replay it after reaching the end
@@ -114,7 +114,7 @@ class VideoThread(QThread):
                 
                 self.frame_id.emit(self.curr_frame)
             else: break
-            print(self.curr_frame)
+            # print(self.curr_frame)
 
 
 
