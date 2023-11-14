@@ -231,10 +231,13 @@ class ResultApp(QWidget):
         return img
         
     def FindFrame(self,position_end,direction):
+        # print(self.position+direction, position_end, direction)
         for position in range(self.position+direction, position_end, direction):
             if position in self.data:
                 for key in ['L','R','L1','R1']:
                     if key in self.data[position]:
+                        # print("# location 1")
+                        # print(position)
                         return position
         return self.position
     

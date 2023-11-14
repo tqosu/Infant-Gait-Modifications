@@ -386,7 +386,7 @@ class VideoWindow(QMainWindow):
     def PrevAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
-        self.setPosition(position)
+        self.setPosition(position-1)
         self.mediaPlayer.showImage()
     
     def ToStartActionF(self):
@@ -475,7 +475,7 @@ class VideoWindow(QMainWindow):
     def NextAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
-        self.setPosition(position)
+        self.setPosition(position-1)
         self.mediaPlayer.showImage()
 
     def RemoveAction(self):
