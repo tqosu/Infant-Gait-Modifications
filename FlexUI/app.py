@@ -386,7 +386,12 @@ class VideoWindow(QMainWindow):
     def PrevAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
-        self.setPosition(position-1)
+        self.setPosition(position)
+        self.mediaPlayer.showImage()
+    def NextAction(self):
+        self.sliderPause()
+        position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
+        self.setPosition(position)
         self.mediaPlayer.showImage()
     
     def ToStartActionF(self):
@@ -397,7 +402,7 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer.showImage()
 
     def Box_Frame_Action(self):
-        curr_frame=self.mediaPlayer.thread.curr_frame-1
+        curr_frame=self.mediaPlayer.thread.curr_frame
         insert_row=[self.mydict['subj'],self.mydict['slbr'],\
                self.mydict['trnu'],curr_frame]
         self.dataframe4.loc[len(self.dataframe4)] \
@@ -467,16 +472,47 @@ class VideoWindow(QMainWindow):
                 myres['3dp'][key1]=point
         self.mydict['data'][curr_frame]=myres
         self.mediaPlayer.thread.run_one(0)
+    
+    def SwapLR(self):
+        curr_frame=self.mediaPlayer.thread.curr_frame
+        res=self.mydict['data'][curr_frame]
+        myres={}
+        # print(self.mydict['data'][curr_frame]['midpoint'])
+        # print(self.mydict['data'][curr_frame]['3dp'])
+        if 'L' in res['3dp']:
+            myres['R']=res['3dp']['L']
+        if 'R' in res['3dp']:
+            myres['L']=res['3dp']['R']
+        res['3dp']=myres
+
+        if 'L1' in res:
+            res['R1']=res['L1']
+            res.pop('L1')
+        elif 'R1' in res:
+            res['L1']=res['R1']
+            res.pop('R1')
+
+        for key in res['box']:
+
+            m=res['box'][key]
+            # print(m)
+            myres={}
+            if 0 in m:
+                myres[1]=m[0]
+            if 1 in m:
+                myres[0]=m[1]
+            res['box'][key]=myres
+            # print(res['box'][key])
+        self.mediaPlayer.thread.run_one(0)
+
         
+
+        # if 'L' in res['3dp'] and 'R':
+        # print(self.mydict['data'][curr_frame].keys())
+        # print(self.mydict['data'][curr_frame]['3dp'])
 
     def Boxes_On(self):
         self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
-
-    def NextAction(self):
-        self.sliderPause()
-        position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
-        self.setPosition(position-1)
-        self.mediaPlayer.showImage()
 
     def RemoveAction(self):
         self.sliderPause()
@@ -576,8 +612,9 @@ class VideoWindow(QMainWindow):
         action.triggered.connect(lambda: self.play(1,-1))
         self.viewAction3.append(action)
 
-        action = QAction('&Boxes on and off', self, checkable=True)      
+        action = QAction('&Boxes on and off | Key_B', self, checkable=True)      
         action.setChecked(True)
+        action.setShortcut(Qt.Key_B)
         action.setStatusTip("Boxes on and off")
         action.triggered.connect(self.Boxes_On)
         self.viewAction3.append(action)
@@ -589,8 +626,15 @@ class VideoWindow(QMainWindow):
         self.viewAction3.append(action)
 
         action = QAction('&Box Frame Update')        
-        action.setStatusTip("Box Frame Update")
+        action.setShortcut(Qt.Key_U)
+        action.setStatusTip("Box Frame Update | Key_U")
         action.triggered.connect(self.Box_Frame_Update)
+        self.viewAction3.append(action)
+
+        action = QAction('&L <-> R')        
+        action.setShortcut(Qt.Key_S)
+        action.setStatusTip("Swap Left and Right | Key_S")
+        action.triggered.connect(self.SwapLR)
         self.viewAction3.append(action)
 
         action = QAction('&Exit')        
