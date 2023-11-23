@@ -57,6 +57,12 @@ class VideoThread(QThread):
     def run_one(self,D):
         # print('# location 3')
         self.curr_frame+=D
+        if D>0:
+            if self.curr_frame>=self.duration_off:
+                self.curr_frame = self.duration_off-1
+        else:
+            if self.curr_frame<self.duration_on:
+                self.curr_frame = self.duration_on
         if self.cap is None: return     
         if self.curr_frame in self.cv_img_mb:
             ret,cv_img=True,self.cv_img_mb[self.curr_frame]
@@ -73,12 +79,7 @@ class VideoThread(QThread):
         self.change_pixmap_signal.emit(cv_img)
 
         # to the last frame
-        if D>0:
-            if self.curr_frame>=self.duration_off:
-                self.curr_frame = self.duration_off-1
-        else:
-            if self.curr_frame<self.duration_on:
-                self.curr_frame = self.duration_on
+        
         print(self.curr_frame)
         self.frame_id.emit(self.curr_frame)
  
@@ -87,6 +88,15 @@ class VideoThread(QThread):
         # print('# location 2')
         while 1:
             self.curr_frame+=self.D
+            if self.D>0:
+                if self.curr_frame>=self.duration_off:
+                    self.curr_frame=self.duration_off-1
+                    break
+            else:
+                if self.curr_frame<self.duration_on:
+                    self.curr_frame=self.duration_on
+                    break
+            
             if self.cap is None: break
             if self._run_flag:
                 if self.curr_frame in self.cv_img_mb:
@@ -104,23 +114,15 @@ class VideoThread(QThread):
                 cv_img=self.box_img(np.copy(cv_img))
                 self.last_image = cv_img        
                 self.change_pixmap_signal.emit(cv_img)
-
-                if self.D>0:
-                    if self.curr_frame>=self.duration_off:
-                        self.curr_frame=self.duration_off-1
-                        break
-                else:
-                    if self.curr_frame<self.duration_on:
-                        self.curr_frame=self.duration_on
-                        break
                 
                 self.frame_id.emit(self.curr_frame)
-            else: break
-            # print(self.curr_frame)
+            else:
+                if self.D>0:
+                    self.run_one(1)
+                elif self.D<0:
+                    self.run_one(-1)
+                break
 
-
-
-    
     # get the last frame and id
     def get_last_image(self, emit_frame=True):
         if self.cap is None or self.last_image is None: return
@@ -136,9 +138,13 @@ class VideoThread(QThread):
         thickness = 2
         # print(t)
         if t in self.data:
+            if 'box_r' in self.data[t]:
+                box_r=self.data[t]['box_r']
+            else:
+                box_r=set()
             for viewid in self.data[t]['box']:
-                # print(key,self.data[t][key])
-                # if key !=2:continue
+                if viewid in box_r:continue
+
                 if viewid==0:
                     h,w=0,0
                 elif viewid==1:

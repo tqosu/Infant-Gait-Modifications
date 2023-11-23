@@ -300,6 +300,12 @@ class ResultApp(QWidget):
 
     def set_file(self,mydict):
         self.data=mydict['data']
+        # for key in self.data:
+        #     del self.data[key]['poly']
+            # print(self.data[key].keys())
+            # value_of_b = my_dict.pop('b')
+            # break
+        # print(self.data.keys())
         self.mydict=mydict
         self.slbr=self.mydict['slbr']
         self.img=self.gen_image()

@@ -62,7 +62,6 @@ class VideoWindow(QMainWindow):
 
         user_path='User/'+self.user_combo.currentText()+'/'
         os.makedirs(user_path, exist_ok=True)
-        os.makedirs('FootBox', exist_ok=True)
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
         if os.path.isfile(path3):
             self.dataframe3=pd.read_csv(path3)
@@ -72,13 +71,6 @@ class VideoWindow(QMainWindow):
                'bridge_l':float, 'bridge_r':float,'partial':bool}
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
-        path4='FootBox.csv'
-        if os.path.isfile(path4):
-            self.dataframe4=pd.read_csv(path4)
-            self.dataframe4=self.dataframe4.drop_duplicates()
-        else:
-            columns_with_dtypes={'subj': int, 'slope_or_bridge': str, 'total_trial_num':int, 'frame':int}
-            self.dataframe4=pd.DataFrame(columns=columns_with_dtypes)
             
         print(path3)
         for _, row in self.dataframe2.iterrows():
@@ -98,10 +90,6 @@ class VideoWindow(QMainWindow):
                 # self.mydict['angle']=-1
             if not isinstance(row['trial_type'], str):
                 row['trial_type']=''
-            #     print("The value is NaN")
-            # print(repr(row['trial_type']))
-            # string=padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2)+' | '+row['trial_type']
-            # print(string)
             self.trnu_combo.addItem(padding+str(idx).zfill(2)+' | '+str(trial_increment).zfill(2)+' | '+row['trial_type'])
 
     # path3 is always user's
@@ -118,12 +106,7 @@ class VideoWindow(QMainWindow):
         # self.slbr_combo_onActivated(slbr)
         # print(self.subj,slbr,text)
         info=[self.subj,'',slbr]
-        # if slbr=='Slope':
-        #     self.Protractor.setEnabled(True)
-        #     # self.PLine.setEnabled(True)
-        # else:
-        #     self.Protractor.setEnabled(False)
-            # self.PLine.setEnabled(False)
+
         fileName = './Flex/dataset3/2021_Flex1_{}_{}_MCH.mp4'.format(info[0],info[2])
         fileName1 = './Flex/dataset/2021_Flex1_{}_SlopeProtractor.mp4'.format(info[0])
 
@@ -326,9 +309,6 @@ class VideoWindow(QMainWindow):
         self.UndoButton.leaveEvent = self.clear_message
         self.UndoButton.clicked.connect(self.UndoAction)
 
-
-      
-
     def update_trnu_combo(self,part):
         text=self.trnu_combo.currentText()
         index_to_replace=self.trnu_combo.currentIndex()
@@ -381,8 +361,6 @@ class VideoWindow(QMainWindow):
     def RightAction(self):
         self.main3Dviewer.AddAction('R')
 
-    
-    
     def PrevAction(self):
         self.sliderPause()
         position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
@@ -401,77 +379,45 @@ class VideoWindow(QMainWindow):
         self.setPosition(self.mediaPlayer.duration_on)
         self.mediaPlayer.showImage()
 
-    def Box_Frame_Action(self):
-        curr_frame=self.mediaPlayer.thread.curr_frame
-        insert_row=[self.mydict['subj'],self.mydict['slbr'],\
-               self.mydict['trnu'],curr_frame]
-        self.dataframe4.loc[len(self.dataframe4)] \
-            = insert_row
-        # print('Insert Row')
-        print(insert_row)
-        self.dataframe4.to_csv('FootBox.csv', index=False)
-        # print(self.mediaPlayer.thread.cv_img_mb.keys())
-        im=self.mediaPlayer.thread.cv_img_mb[curr_frame]
-        h,w,_=im.shape
-        h,w=int(h/2),int(w/2)
-        # cv2.imwrite('FootBox/x.png', im)
-        # im
-        for view in range(4):
-            if view==0:im1=im[:h,:w]
-            elif view==1:im1=im[:h,w:]
-            elif view==2:im1=im[h:,:w]
-            elif view==3:im1=im[h:,w:]
-            
-            mydict={}
-            mydict['save_path']='FootBox/'
-            mydict['img_path']=mydict['save_path']+'{}.png'.format(view)
-            mydict['im']=im1
-            mydict['polys']=[]
-            # img_path=
-            cv2.imwrite(mydict['img_path'], im1)
-            if view in self.mydict['data'][curr_frame]['poly']:
-                mydict['polys']=self.mydict['data'][curr_frame]['poly'][view]
-                # print(type(mydict['polys']))
-            to_labelme(mydict)
+    # def Box_Frame_Update(self):
+    #     # curr_frame=self.mediaPlayer.thread.curr_frame-1
+    #     # self.setPosition(self.mediaPlayer.thread.curr_frame)
+    #     curr_frame=self.mediaPlayer.thread.curr_frame
+    #     keymap0={'R':0, 'L':1}
+    #     keymap1={0:'R', 1:'L'}
+    #     myres={'box':defaultdict(dict),'poly':defaultdict(dict),\
+    #           'midpoint':defaultdict(dict),'3dp':{}}
+    #     for view in range(4):
+    #         with open('FootBox/{}.json'.format(view), 'r') as file:
+    #             # Load JSON data from the file
+    #             data = json.load(file)
+    #         for instance in data['shapes']:
+    #             key=keymap0[instance['label']]
+    #             polygon_points=instance['points']
+    #             # print(polygon_points)
+    #             # break
+    #             x_coords, y_coords = zip(*polygon_points)
 
-    def Box_Frame_Update(self):
-        # curr_frame=self.mediaPlayer.thread.curr_frame-1
-        # self.setPosition(self.mediaPlayer.thread.curr_frame)
-        curr_frame=self.mediaPlayer.thread.curr_frame
-        keymap0={'R':0, 'L':1}
-        keymap1={0:'R', 1:'L'}
-        myres={'box':defaultdict(dict),'poly':defaultdict(dict),'midpoint':defaultdict(dict),'3dp':{}}
-        for view in range(4):
-            with open('FootBox/{}.json'.format(view), 'r') as file:
-                # Load JSON data from the file
-                data = json.load(file)
-            for instance in data['shapes']:
-                key=keymap0[instance['label']]
-                polygon_points=instance['points']
-                # print(polygon_points)
-                # break
-                x_coords, y_coords = zip(*polygon_points)
+    #             # Find the bounding box coordinates
+    #             min_x, max_x = min(x_coords), max(x_coords)
+    #             min_y, max_y = min(y_coords), max(y_coords)
+    #             center_x = (min_x + max_x) / 2
+    #             center_y = (min_y + max_y) / 2
 
-                # Find the bounding box coordinates
-                min_x, max_x = min(x_coords), max(x_coords)
-                min_y, max_y = min(y_coords), max(y_coords)
-                center_x = (min_x + max_x) / 2
-                center_y = (min_y + max_y) / 2
-
-                # Bounding box points
-                bounding_box = np.array([min_x, min_y,max_x, max_y])
-                midpoint=np.array([center_x,center_y])
-                myres['box'][view][key]=bounding_box
-                myres['poly'][view][key]=polygon_points
-                # print(type(polygon_points))
-                myres['midpoint'][view][key]=midpoint
-        for key in range(2):
-            point=spoint(self.cams,myres['midpoint'],key)
-            if point is not None:
-                key1=keymap1[key]
-                myres['3dp'][key1]=point
-        self.mydict['data'][curr_frame]=myres
-        self.mediaPlayer.thread.run_one(0)
+    #             # Bounding box points
+    #             bounding_box = np.array([min_x, min_y,max_x, max_y])
+    #             midpoint=np.array([center_x,center_y])
+    #             myres['box'][view][key]=bounding_box
+    #             myres['poly'][view][key]=polygon_points
+    #             # print(type(polygon_points))
+    #             myres['midpoint'][view][key]=midpoint
+    #     for key in range(2):
+    #         point=spoint(self.cams,myres['midpoint'],key)
+    #         if point is not None:
+    #             key1=keymap1[key]
+    #             myres['3dp'][key1]=point
+    #     self.mydict['data'][curr_frame]=myres
+    #     self.mediaPlayer.thread.run_one(0)
     
     def SwapLR(self):
         curr_frame=self.mediaPlayer.thread.curr_frame
@@ -504,12 +450,6 @@ class VideoWindow(QMainWindow):
             res['box'][key]=myres
             # print(res['box'][key])
         self.mediaPlayer.thread.run_one(0)
-
-        
-
-        # if 'L' in res['3dp'] and 'R':
-        # print(self.mydict['data'][curr_frame].keys())
-        # print(self.mydict['data'][curr_frame]['3dp'])
 
     def Boxes_On(self):
         self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
@@ -619,17 +559,11 @@ class VideoWindow(QMainWindow):
         action.triggered.connect(self.Boxes_On)
         self.viewAction3.append(action)
 
-        action = QAction('&Wrong Box Frame')        
-        action.setShortcut(Qt.Key_F)
-        action.setStatusTip("Wrong Box Frame | Key_F")
-        action.triggered.connect(self.Box_Frame_Action)
-        self.viewAction3.append(action)
-
-        action = QAction('&Box Frame Update')        
-        action.setShortcut(Qt.Key_U)
-        action.setStatusTip("Box Frame Update | Key_U")
-        action.triggered.connect(self.Box_Frame_Update)
-        self.viewAction3.append(action)
+        # action = QAction('&Box Frame Update')        
+        # action.setShortcut(Qt.Key_U)
+        # action.setStatusTip("Box Frame Update | Key_U")
+        # action.triggered.connect(self.Box_Frame_Update)
+        # self.viewAction3.append(action)
 
         action = QAction('&L <-> R')        
         action.setShortcut(Qt.Key_S)
@@ -650,6 +584,7 @@ class VideoWindow(QMainWindow):
         self.viewMenu1.setEnabled(False)
         self.viewMenu2.setEnabled(False)
         self.viewMenu3.setEnabled(False)
+
     def viewSelect2(self):
         self.mediaPlayer.stop_video()
         self.main3Dviewer.action_menu_aux=self.action_menu_aux.isChecked()
@@ -693,7 +628,7 @@ class VideoWindow(QMainWindow):
         self.setWindowIcon(QIcon('./icons/baby-boy.png'))
         self.move(200, 100)
 
-        self.mediaPlayer = VideoApp()
+        self.mediaPlayer = VideoApp(self)
         self.mediaPlayer.frame_id.connect(self.setPosition)
         self.main3Dviewer = ResultApp()
         # Button
@@ -790,6 +725,7 @@ class VideoWindow(QMainWindow):
         controlLayout.addWidget(self.playFrontButton1)
         # controlLayout.addWidget(self.playFrontButton)
         controlLayout.addWidget(self.positionSlider)
+        
         controlLayout.addLayout(sceneBLayout)
 
         control3DLayout = QHBoxLayout()
@@ -863,6 +799,7 @@ class VideoWindow(QMainWindow):
         if self.mediaPlayer.thread is None: return
         if self.mediaPlayer.thread._run_flag:
            self.mediaPlayer.stop_video()  
+        print("# location 7", self.mediaPlayer.thread.curr_frame)
 
     def sliderPause(self):
         # When slider is clicked
