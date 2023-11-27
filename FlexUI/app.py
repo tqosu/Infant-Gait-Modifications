@@ -99,6 +99,10 @@ class VideoWindow(QMainWindow):
         self.viewMenu1.setEnabled(True)
         self.viewMenu2.setEnabled(True)
         self.viewMenu3.setEnabled(True)
+        self.remove_menu.setEnabled(True)
+        self.swap_menu.setEnabled(True)
+        
+        
         user_path='User/'+self.user_combo.currentText()+'/'
 
         text=text[1:].split(' | ')[0]
@@ -420,36 +424,29 @@ class VideoWindow(QMainWindow):
     #     self.mediaPlayer.thread.run_one(0)
     
     def SwapLR(self):
-        curr_frame=self.mediaPlayer.thread.curr_frame
-        res=self.mydict['data'][curr_frame]
-        myres={}
-        # print(self.mydict['data'][curr_frame]['midpoint'])
-        # print(self.mydict['data'][curr_frame]['3dp'])
-        if 'L' in res['3dp']:
-            myres['R']=res['3dp']['L']
-        if 'R' in res['3dp']:
-            myres['L']=res['3dp']['R']
-        res['3dp']=myres
-
-        if 'L1' in res:
-            res['R1']=res['L1']
-            res.pop('L1')
-        elif 'R1' in res:
-            res['L1']=res['R1']
-            res.pop('R1')
-
-        for key in res['box']:
-
-            m=res['box'][key]
-            # print(m)
-            myres={}
-            if 0 in m:
-                myres[1]=m[0]
-            if 1 in m:
-                myres[0]=m[1]
-            res['box'][key]=myres
-            # print(res['box'][key])
-        self.mediaPlayer.thread.run_one(0)
+        t=self.mediaPlayer.thread.curr_frame
+        data=self.mediaPlayer.thread.data
+        box=data[t]['box']
+        midpoint=data[t]['midpoint']
+        if 'box_s' in data[t]:
+            box_s=data[t]['box_s']
+        else:
+            box_s=set()
+        for view_id in box:
+            myres={'midpoint':defaultdict(dict),'box':defaultdict(dict)}
+            # box swap
+            if view_id in box_s:
+                box_s.remove(view_id)
+            else:
+                box_s.add(view_id)
+            for key in box[view_id]:
+                myres['midpoint'][view_id][1-key]=midpoint[view_id][key]
+                myres['box'][view_id][1-key]=box[view_id][key]
+            box[view_id]=myres['box'][view_id]
+            midpoint[view_id]=myres['midpoint'][view_id]
+        data[t]['box_s']=box_s
+        print("Swap all views")
+        self.mediaPlayer.Box_Frame_Update()
 
     def Boxes_On(self):
         self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
@@ -572,18 +569,44 @@ class VideoWindow(QMainWindow):
         self.viewAction3.append(action)
 
         action = QAction('&Exit')        
-        action.setShortcut(Qt.Key_Q)
-        action.setStatusTip("Exit | Key_Q")
+        action.setShortcut(Qt.Key_Escape)
+        action.setStatusTip("Exit | Qt.Key_Escape")
         action.triggered.connect(qApp.quit) 
         self.viewAction3.append(action)
-
         for i in range(len(self.viewAction3)):
             self.viewMenu3.addAction(self.viewAction3[i])
+
+        self.remove_menu = menuBar.addMenu('Remove')
+        mystr='QWER'
+        for i in range(4):
+            # Create exit action
+            action = QAction('&Remove '+str(i+1), self, checkable=True)
+            action.setChecked(False)
+            action.setStatusTip('Remove '+str(i+1))
+            action.setData(i)
+            action.setShortcut(QKeySequence(getattr(Qt, f"Key_{mystr[i]}")))
+            # action.setShortcut(Qt.Key_Plus)
+            action.triggered.connect(self.mediaPlayer.removeSelect)
+            self.remove_menu.addAction(action)
+
+        self.swap_menu = menuBar.addMenu('Swap')
+
+        for i in range(4):
+            # Create exit action
+            action = QAction('&Swap View '+str(i+1), self, checkable=True)
+            action.setChecked(False)
+            action.setShortcut(QKeySequence(Qt.ShiftModifier + getattr(Qt, f"Key_{mystr[i]}")))
+            # action.setStatusTip('Swap view '+str(i+1))
+            action.setData(i)
+            action.triggered.connect(self.mediaPlayer.swapSelect)
+            self.swap_menu.addAction(action)
 
 
         self.viewMenu1.setEnabled(False)
         self.viewMenu2.setEnabled(False)
         self.viewMenu3.setEnabled(False)
+        self.remove_menu.setEnabled(False)
+        self.swap_menu.setEnabled(False)
 
     def viewSelect2(self):
         self.mediaPlayer.stop_video()
@@ -619,7 +642,7 @@ class VideoWindow(QMainWindow):
     def __init__(self, args):
         super(VideoWindow, self).__init__()
         self.mydict=defaultdict()
-        self.menu_init()
+        
         # print(args)
         # self.init()
 
@@ -631,6 +654,7 @@ class VideoWindow(QMainWindow):
         self.mediaPlayer = VideoApp(self)
         self.mediaPlayer.frame_id.connect(self.setPosition)
         self.main3Dviewer = ResultApp()
+        self.menu_init()
         # Button
         self.playButton = QPushButton()
         self.playButton.setEnabled(False)

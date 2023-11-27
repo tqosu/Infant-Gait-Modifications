@@ -40,39 +40,39 @@ class VideoApp(QWidget):
         self.textLabel = QLabel('Video')
         self.textLabel.setStyleSheet("border :1px solid black;")
 
-        self.menu_bar = QMenuBar(self)
-        # Create a menu
-        self.remove_menu = self.menu_bar.addMenu('Remove')
+        # self.menu_bar = QMenuBar(self)
+        # # Create a menu
+        # self.remove_menu = self.menu_bar.addMenu('Remove')
 
-        for i in range(4):
-            # Create exit action
-            action = QAction('&Remove '+str(i+1), self, checkable=True)
-            action.setChecked(False)
-            action.setStatusTip('Remove '+str(i+1))
-            action.setData(i)
-            action.setShortcut(str(i+1))
-            # action.setShortcut(Qt.Key_Plus)
-            action.triggered.connect(self.removeSelect)
-            self.remove_menu.addAction(action)
+        # for i in range(4):
+        #     # Create exit action
+        #     action = QAction('&Remove '+str(i+1), self, checkable=True)
+        #     action.setChecked(False)
+        #     action.setStatusTip('Remove '+str(i+1))
+        #     action.setData(i)
+        #     action.setShortcut(str(i+1))
+        #     # action.setShortcut(Qt.Key_Plus)
+        #     action.triggered.connect(self.removeSelect)
+        #     self.remove_menu.addAction(action)
 
-        self.swap_menu = self.menu_bar.addMenu('Swap')
+        # self.swap_menu = self.menu_bar.addMenu('Swap')
 
-        for i in range(4):
-            # Create exit action
-            action = QAction('&Swap View '+str(i+1), self, checkable=True)
-            action.setChecked(False)
-            action.setShortcut(QKeySequence(Qt.ControlModifier + getattr(Qt, f"Key_{i+1}")))
-            # action.setStatusTip('Swap view '+str(i+1))
-            action.setData(i)
-            action.triggered.connect(self.swapSelect)
-            self.swap_menu.addAction(action)
+        # for i in range(4):
+        #     # Create exit action
+        #     action = QAction('&Swap View '+str(i+1), self, checkable=True)
+        #     action.setChecked(False)
+        #     action.setShortcut(QKeySequence(Qt.ControlModifier + getattr(Qt, f"Key_{i+1}")))
+        #     # action.setStatusTip('Swap view '+str(i+1))
+        #     action.setData(i)
+        #     action.triggered.connect(self.swapSelect)
+        #     self.swap_menu.addAction(action)
 
-        self.statusBar = QStatusBar(self)
+        # self.statusBar = QStatusBar(self)
         vbox = QVBoxLayout()
-        vbox.addWidget(self.menu_bar)
+        # vbox.addWidget(self.menu_bar)
         vbox.addWidget(self.image_label)#, alignment=Qt.AlignCenter)
         vbox.addWidget(self.textLabel, alignment=Qt.AlignBottom)
-        vbox.addWidget(self.statusBar)
+        # vbox.addWidget(self.statusBar)
         # set the vbox layout as the widgets layout
         self.setLayout(vbox)
 
@@ -210,8 +210,8 @@ class VideoApp(QWidget):
         second = position//self.thread.fps
         self.textLabel.setText("Time: {:.0f}:{:.0f} \t-\t Frame: {}".format(second//60, second % 60, position))
         self.last_position = position
-        self.reset_action_menu( 'box_r', self.remove_menu.actions())
-        self.reset_action_menu( 'box_s', self.swap_menu.actions())
+        self.reset_action_menu( 'box_r', self.parent.remove_menu.actions())
+        self.reset_action_menu( 'box_s', self.parent.swap_menu.actions())
         
         # print('location 1')
         return
