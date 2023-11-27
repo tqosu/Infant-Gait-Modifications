@@ -584,7 +584,8 @@ class VideoWindow(QMainWindow):
             action.setChecked(False)
             action.setStatusTip('Remove '+str(i+1))
             action.setData(i)
-            action.setShortcut(QKeySequence(getattr(Qt, f"Key_{mystr[i]}")))
+            action.setShortcut(QKeySequence(Qt.ShiftModifier + getattr(Qt, f"Key_{mystr[i]}")))
+            
             # action.setShortcut(Qt.Key_Plus)
             action.triggered.connect(self.mediaPlayer.removeSelect)
             self.remove_menu.addAction(action)
@@ -595,7 +596,7 @@ class VideoWindow(QMainWindow):
             # Create exit action
             action = QAction('&Swap View '+str(i+1), self, checkable=True)
             action.setChecked(False)
-            action.setShortcut(QKeySequence(Qt.ShiftModifier + getattr(Qt, f"Key_{mystr[i]}")))
+            action.setShortcut(QKeySequence(getattr(Qt, f"Key_{mystr[i]}")))
             # action.setStatusTip('Swap view '+str(i+1))
             action.setData(i)
             action.triggered.connect(self.mediaPlayer.swapSelect)
