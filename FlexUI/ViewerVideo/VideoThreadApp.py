@@ -38,6 +38,8 @@ class VideoThread(QThread):
         # self.camera=camera(mydict)
         # print(self.h,self.w)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+
+        # print('fps: {}'.format(self.fps))
         self.S=1
         self.D=1
         self.duration_on= int(self.fps*mydict['on'])
@@ -77,16 +79,12 @@ class VideoThread(QThread):
             
         self.last_image = cv_img        
         self.change_pixmap_signal.emit(cv_img)
-
-        # to the last frame
-        
-        print(self.curr_frame)
         self.frame_id.emit(self.curr_frame)
  
     # play video and replay it after reaching the end
     def run(self):
         # print('# location 2')
-        while 1:
+        while self._run_flag:
             self.curr_frame+=self.D
             if self.D>0:
                 if self.curr_frame>=self.duration_off:

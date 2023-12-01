@@ -6,13 +6,15 @@ from PyQt5.QtGui import QImage, QPixmap
 import numpy as np
 import cv2,math
 import sys
-
+import logging
 import copy
 
 class ResultApp(QWidget):
-    def __init__(self):
+    def __init__(self,parent=None):
         super().__init__()
+        # raise ValueError("Assertion failed at libavcodec/pthread_frame.c:155")
         self.setWindowTitle("A Top-down View") 
+        self.logger=parent.logger
         self.action_menu_aux=True
         self.action_menu_vtl=False
         self.rate=8
@@ -170,7 +172,8 @@ class ResultApp(QWidget):
             # if self.mydict['angle']!=-1:
             #     print('yes')
             angle=self.mydict['angle']
-            print('slope angle: {}'.format(angle))
+            
+            self.logger.log(logging.DEBUG, 'slope angle: {}'.format(angle), extra={'qThreadName': 'ResultApp'})
 
             theta=angle/180*math.pi
             cos=math.cos(theta)
@@ -267,8 +270,6 @@ class ResultApp(QWidget):
     def SaveAction(self):
         mydata={}
         mydata['data']=self.data
-        # print(self.position)
-        print('save_action')
         np.save(self.mydict['path_data_sv'], mydata, allow_pickle=True)
         self.stack=[]
 
@@ -300,12 +301,7 @@ class ResultApp(QWidget):
 
     def set_file(self,mydict):
         self.data=mydict['data']
-        # for key in self.data:
-        #     del self.data[key]['poly']
-            # print(self.data[key].keys())
-            # value_of_b = my_dict.pop('b')
-            # break
-        # print(self.data.keys())
+
         self.mydict=mydict
         self.slbr=self.mydict['slbr']
         self.img=self.gen_image()

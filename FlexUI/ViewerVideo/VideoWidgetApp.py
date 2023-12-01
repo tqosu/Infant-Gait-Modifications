@@ -14,6 +14,10 @@ from collections import defaultdict
 import sys,json,os
 from .VideoThreadApp import VideoThread
 from ..app_helper import spoint
+import logging
+
+def ctname():
+    return 'VideoApp'
 
 class VideoApp(QWidget):
     frame_id = pyqtSignal(int)
@@ -26,6 +30,7 @@ class VideoApp(QWidget):
         self.display_height = 600
         self.annotation_on = False
         self.parent=parent
+        self.logger=parent.logger
         #self.disply_width = 670
         #self.display_height = 540
         # create the label that holds the image
@@ -39,33 +44,6 @@ class VideoApp(QWidget):
         # create a text label
         self.textLabel = QLabel('Video')
         self.textLabel.setStyleSheet("border :1px solid black;")
-
-        # self.menu_bar = QMenuBar(self)
-        # # Create a menu
-        # self.remove_menu = self.menu_bar.addMenu('Remove')
-
-        # for i in range(4):
-        #     # Create exit action
-        #     action = QAction('&Remove '+str(i+1), self, checkable=True)
-        #     action.setChecked(False)
-        #     action.setStatusTip('Remove '+str(i+1))
-        #     action.setData(i)
-        #     action.setShortcut(str(i+1))
-        #     # action.setShortcut(Qt.Key_Plus)
-        #     action.triggered.connect(self.removeSelect)
-        #     self.remove_menu.addAction(action)
-
-        # self.swap_menu = self.menu_bar.addMenu('Swap')
-
-        # for i in range(4):
-        #     # Create exit action
-        #     action = QAction('&Swap View '+str(i+1), self, checkable=True)
-        #     action.setChecked(False)
-        #     action.setShortcut(QKeySequence(Qt.ControlModifier + getattr(Qt, f"Key_{i+1}")))
-        #     # action.setStatusTip('Swap view '+str(i+1))
-        #     action.setData(i)
-        #     action.triggered.connect(self.swapSelect)
-        #     self.swap_menu.addAction(action)
 
         # self.statusBar = QStatusBar(self)
         vbox = QVBoxLayout()
@@ -120,6 +98,9 @@ class VideoApp(QWidget):
         self.thread.run_one(0)
 
     def swapSelect(self):
+        ltxt='swapSelect {}'.format(self.thread.curr_frame)
+        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+
         view_id = self.sender().data()
         data=self.thread.data
         t=self.thread.curr_frame
@@ -144,13 +125,16 @@ class VideoApp(QWidget):
         box[view_id]=myres['box'][view_id]
         midpoint[view_id]=myres['midpoint'][view_id]
         data[t]['box_s']=box_s
-        print("Swap view {}".format(view_id+1))
+        ltxt="Swap view {}".format(view_id+1)
+        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
         # print(self.thread.data[self.thread.curr_frame]['midpoint'])
         self.Box_Frame_Update()
         # self.thread.run_one(0)
 
 
     def removeSelect(self):
+        ltxt='removeSelect {}'.format(self.thread.curr_frame)
+        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
         # print("# location 8", self.thread.curr_frame)
         view_id = self.sender().data()
         
@@ -167,8 +151,8 @@ class VideoApp(QWidget):
                 # actions[view_id].setChecked(True)
         else:
             myset.remove(view_id)
-        print("Removed Views",end='')
-        print(myset)
+        numbers_as_string = 'Removed Views '+''.join(str(num) for num in myset)
+        self.logger.log(logging.DEBUG, numbers_as_string, extra={'qThreadName': ctname()})
         self.Box_Frame_Update()
 
 
@@ -193,6 +177,9 @@ class VideoApp(QWidget):
     
     def set_file(self, mydict):
         self.thread._run_flag = False
+        # self.thread.quit()
+        # self.setThread()
+        # print("# location 9")
         self.duration_on, self.duration_off, self.height_video, self.width_video = self.thread.set_file(mydict)    
         self.last_position=self.duration_on
         # self.resize(self.height_video, self.width_video)
@@ -226,7 +213,9 @@ class VideoApp(QWidget):
         self.thread._run_flag = False
     
     def start_video(self,S,D,one2one=False):
-        print("S {:.1f}, D {}".format(S,D))
+        self.logger.log(logging.DEBUG, "S {:.1f}, D {}".format(S,D), \
+            extra={'qThreadName': ctname()})
+        # print()
         self.thread._run_flag = True
         self.thread.S = S
         self.thread.D = D

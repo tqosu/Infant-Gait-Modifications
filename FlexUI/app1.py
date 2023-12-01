@@ -17,22 +17,43 @@ import random
 from functools import partial
 from pathlib import Path
 import cv2,math
-from .app_helper import to_labelme, spoint, camera
+from .app_helper import to_labelme,spoint,camera
 
 import logging
 from datetime import datetime
 
 import colorama
 from colorama import Fore, Style
-from io import StringIO
+
 colorama.init()
+logger = logging.getLogger(__name__)
 def ctname():
     return QtCore.QThread.currentThread().objectName()
 LEVELS = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
           logging.CRITICAL)
 
-class CustomFormatter(logging.Formatter):
-    def format(self, record):
+class QtHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        os.makedirs('LOG_', exist_ok=True)
+        current_datetime = datetime.now()
+
+        # Create a formatted string for the log file name
+        log_file_name = 'LOG_/'+current_datetime.strftime("%Y-%m-%d_%H-%M-%S") + "_app_log.txt"
+        file_handler = logging.FileHandler(log_file_name)
+        # formatter = logging.Formatter('%(asctime)s %(qThreadName)-12s %(levelname)-8s %(message)s')
+        formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(name)s %(message)s\n%(pathname)s:%(lineno)d %(funcName)s')
+        file_handler.setFormatter(formatter)
+        logging.getLogger().addHandler(file_handler)
+
+    def emit(self, record):
+        s = self.format(record)
+        # Print colored logs to the console
+        console_message = self.get_console_message(record)
+        print(console_message)
+
+    def get_console_message(self, record):
         level_colors = {
             logging.DEBUG: Fore.BLUE,
             logging.INFO: Fore.GREEN,
@@ -42,39 +63,18 @@ class CustomFormatter(logging.Formatter):
         }
 
         level_color = level_colors.get(record.levelno, Fore.WHITE)
-        message = super().format(record)
+        message = f"{record.levelname}: {record.msg}"
         return f"{Style.BRIGHT}{level_color}{message}{Style.RESET_ALL}"
-
-def setup_logging():
-    os.makedirs('LOG_', exist_ok=True)
-    current_datetime = datetime.now()
-
-    # Create a formatted string for the log file name
-    log_file_name = 'LOG_/' + current_datetime.strftime("%Y-%m-%d_%H-%M-%S") + "_app_log.txt"
-    
-    # Configure a file handler
-    file_handler = logging.FileHandler(log_file_name)
-    file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(name)s %(message)s\n%(pathname)s:%(lineno)d %(funcName)s'))
-    
-    # Configure a console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(CustomFormatter('%(asctime)s %(levelname)-8s %(name)s %(message)s'))
-
-    # Get the root logger and add the handlers
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
-
-    root_logger.log(logging.DEBUG, log_file_name)
-
-
-setup_logging()
-logger=logging.getLogger(__name__)
-
 
 class VideoWindow(QMainWindow):
 
+    COLORS = {
+        logging.DEBUG: 'black',
+        logging.INFO: 'blue',
+        logging.WARNING: 'orange',
+        logging.ERROR: 'red',
+        logging.CRITICAL: 'purple',
+    }
 
     def str2sec(self,string1):
         a1,b1,c1,d1=string1.split(':')
@@ -127,7 +127,7 @@ class VideoWindow(QMainWindow):
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
             
-        self.logger.log(logging.DEBUG, path3, extra={'qThreadName': ctname()})
+        logger.log(logging.INFO, path3, extra={'qThreadName': ctname()})
         for _, row in self.dataframe2.iterrows():
             idx=row['total_trial_num']
             trial_increment=row['trial_increment']
@@ -179,7 +179,7 @@ class VideoWindow(QMainWindow):
         pathdata='2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
         path2='./Flex/box6_5/'+pathdata
         path2sv=user_path+pathdata
-        self.logger.log(logging.DEBUG, path2, extra={'qThreadName': ctname()})
+        logger.log(logging.DEBUG, path2, extra={'qThreadName': ctname()})
         
         os.makedirs(user_path, exist_ok=True)
 
@@ -209,7 +209,7 @@ class VideoWindow(QMainWindow):
                 data1 = json.load(f)
                 self.mydict['x1']=data1['x1']
                 self.mydict['x2']=data1['x2']
-                # self.logger.log(logging.DEBUG, bridge_json, extra={'qThreadName': ctname()})
+                logger.log(logging.DEBUG, bridge_json, extra={'qThreadName': ctname()})
         
         on=self.str2sec(on)-offset
         off=self.str2sec(off)-offset
@@ -250,7 +250,7 @@ class VideoWindow(QMainWindow):
 
     def prepare_trials(self,args):
         # self.dataframe=pd.read_csv('Flex.csv')
-        self.logger.log(logging.DEBUG, args.csv_name, extra={'qThreadName': ctname()})
+        logger.log(logging.INFO, args.csv_name, extra={'qThreadName': ctname()})
         
         self.dataframe=pd.read_csv(args.csv_name)
         # self.dataframe=pd.read_csv('Flex_0919.csv')
@@ -377,166 +377,101 @@ class VideoWindow(QMainWindow):
     # 0 complete
     # 1 part
     def SaveAction(self,part=0):
-        ltxt='SaveAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            mydict=self.mydict
-            self.dataframe3.loc[int(self.mydict['trnu'])] =\
-                [mydict['subj'],mydict['slbr'],mydict['usr'], -1,-1,part]
-            ltxt='{} {}'.format(self.mydict['path_csv'],part)
-            self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-            self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
-            self.update_trnu_combo(part)
-            self.main3Dviewer.SaveAction()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        
+        self.sliderPause()
+        mydict=self.mydict
+        self.dataframe3.loc[int(self.mydict['trnu'])] =\
+            [mydict['subj'],mydict['slbr'],mydict['usr'], -1,-1,part]
+        print(self.mydict['path_csv'],part)
+        self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
+        self.update_trnu_combo(part)
+        self.main3Dviewer.SaveAction()
 
     def UndoAction(self):
-        ltxt='UndoAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            position=self.main3Dviewer.UndoAction()
-            if position!=-1:
-                self.setPosition(position)
-                self.mediaPlayer.showImage()    
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.sliderPause()
+        position=self.main3Dviewer.UndoAction()
+        if position!=-1:
+            self.setPosition(position)
+            self.mediaPlayer.showImage()    
 
     def reset3D(self):
-        ltxt='reset3D {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            ltxt='reset3D {}'.format(self.mediaPlayer.thread.curr_frame)
-            self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-            self.main3Dviewer.reset()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.main3Dviewer.reset()
     
     def TrialAction(self):
-        self.logger.log(logging.DEBUG, 'TrialAction', extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            index = self.trnu_combo.currentIndex()
-            total=self.trnu_combo.count()
-            self.trnu_combo.setCurrentIndex((index+1)%total)
-            # print("# location 8")
-            self.trnu_combo_onActivated(self.trnu_combo.currentText())
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.sliderPause()
+        index = self.trnu_combo.currentIndex()
+        total=self.trnu_combo.count()
+        self.trnu_combo.setCurrentIndex((index+1)%total)
+        print("# location 8")
+        self.trnu_combo_onActivated(self.trnu_combo.currentText())
+        # pass
+        # self.main3Dviewer.AddAction('L')
 
     def LeftAction(self):
-        ltxt='LeftAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.main3Dviewer.AddAction('L')
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
-        # pass
+        self.main3Dviewer.AddAction('L')
+        pass
 
     def RightAction(self):
-        ltxt='RightAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.main3Dviewer.AddAction('R')
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.main3Dviewer.AddAction('R')
 
     def PrevAction(self):
-        ltxt='PrevAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
-            self.setPosition(position)
-            self.mediaPlayer.showImage()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.sliderPause()
+        position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
+        self.setPosition(position)
+        self.mediaPlayer.showImage()
     def NextAction(self):
-        ltxt='NextAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
-            self.setPosition(position)
-            self.mediaPlayer.showImage()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.sliderPause()
+        position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
+        self.setPosition(position)
+        self.mediaPlayer.showImage()
     
     def ToStartActionF(self):
-        ltxt='ToStartActionF'
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            print("immediately takes you to the start of the trial")
-            self.sliderPause()
-            # position = self.mediaPlayer.duration_on
-            self.setPosition(self.mediaPlayer.duration_on)
-            self.mediaPlayer.showImage()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        print("immediately takes you to the start of the trial")
+        self.sliderPause()
+        # position = self.mediaPlayer.duration_on
+        self.setPosition(self.mediaPlayer.duration_on)
+        self.mediaPlayer.showImage()
 
    
     
     def SwapLR(self):
-        ltxt='SwapLR {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            t=self.mediaPlayer.thread.curr_frame
-            data=self.mediaPlayer.thread.data
-            box=data[t]['box']
-            midpoint=data[t]['midpoint']
-            if 'box_s' in data[t]:
-                box_s=data[t]['box_s']
+        t=self.mediaPlayer.thread.curr_frame
+        data=self.mediaPlayer.thread.data
+        box=data[t]['box']
+        midpoint=data[t]['midpoint']
+        if 'box_s' in data[t]:
+            box_s=data[t]['box_s']
+        else:
+            box_s=set()
+        for view_id in box:
+            myres={'midpoint':defaultdict(dict),'box':defaultdict(dict)}
+            # box swap
+            if view_id in box_s:
+                box_s.remove(view_id)
             else:
-                box_s=set()
-            for view_id in box:
-                myres={'midpoint':defaultdict(dict),'box':defaultdict(dict)}
-                # box swap
-                if view_id in box_s:
-                    box_s.remove(view_id)
-                else:
-                    box_s.add(view_id)
-                for key in box[view_id]:
-                    myres['midpoint'][view_id][1-key]=midpoint[view_id][key]
-                    myres['box'][view_id][1-key]=box[view_id][key]
-                box[view_id]=myres['box'][view_id]
-                midpoint[view_id]=myres['midpoint'][view_id]
-            data[t]['box_s']=box_s
-            print("Swap all views")
-            self.mediaPlayer.Box_Frame_Update()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
-        
+                box_s.add(view_id)
+            for key in box[view_id]:
+                myres['midpoint'][view_id][1-key]=midpoint[view_id][key]
+                myres['box'][view_id][1-key]=box[view_id][key]
+            box[view_id]=myres['box'][view_id]
+            midpoint[view_id]=myres['midpoint'][view_id]
+        data[t]['box_s']=box_s
+        print("Swap all views")
+        self.mediaPlayer.Box_Frame_Update()
 
     def Boxes_On(self):
-        ltxt='Boxes_On {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
 
     def RemoveAction(self):
-        ltxt='RemoveAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            self.main3Dviewer.RemoveAction()
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.sliderPause()
+        self.main3Dviewer.RemoveAction()
 
     def ClearAction(self):
-        ltxt='ClearAction {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            self.main3Dviewer.ClearAction()
-            if self.mydict['trnu'] in self.dataframe3:
-                self.dataframe3.drop(self.mydict['trnu'], inplace=True)
-            self.update_trnu_combo(-1)
-        except Exception as e:
-            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        self.sliderPause()
+        self.main3Dviewer.ClearAction()
+        if self.mydict['trnu'] in self.dataframe3:
+            self.dataframe3.drop(self.mydict['trnu'], inplace=True)
+        self.update_trnu_combo(-1)
 
     def setFile(self):
 
@@ -713,8 +648,12 @@ class VideoWindow(QMainWindow):
     def __init__(self, args):
         super(VideoWindow, self).__init__()
 
-        
-        self.logger= logger
+        self.handler = QtHandler()
+        fs = '%(asctime)s %(qThreadName)-12s %(levelname)-8s %(message)s'
+        formatter = logging.Formatter(fs)
+        self.handler.setFormatter(formatter)
+        logger.addHandler(self.handler)
+        self.logger=logger
 
         self.mydict=defaultdict()
         
@@ -862,68 +801,50 @@ class VideoWindow(QMainWindow):
         wid.setLayout(mainlayout)
 
     def playback(self):
-        ltxt='playback {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            position = max(self.mediaPlayer.duration_on, self.positionSlider.value() - 5)
-            self.setPosition(position)
-            self.mediaPlayer.showImage()
-        except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
+        self.sliderPause()
+        position = max(self.mediaPlayer.duration_on, self.positionSlider.value() - 5)
+        self.setPosition(position)
+        self.mediaPlayer.showImage()
+    
+    def playback1_test(self):
+        a=1/0
     def playback1(self):
-        ltxt='playback1 {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+        # a=1/0
         try:
-            if self.mediaPlayer.thread is None: return
-            if self.mediaPlayer.thread._run_flag:
-                self.mediaPlayer.stop_video()
-            self.mediaPlayer.thread.run_one(-1)
+            # Simulate code that might raise an exception
+            self.playback1_test()
         except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
+            # Log the exception using the logger
+            # logger.exception("An error occurred: %s", e)
+            logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+        
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+            self.mediaPlayer.stop_video()
+        self.mediaPlayer.thread.run_one(-1)
 
     def playfront(self):
-        ltxt='playfront {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            self.sliderPause()
-            position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 5)
-            self.setPosition(position)
-            self.mediaPlayer.showImage()
-        except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
+        self.sliderPause()
+        position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 5)
+        self.setPosition(position)
+        self.mediaPlayer.showImage()
     
     def playfront1(self):
-        ltxt='playfront1 {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            if self.mediaPlayer.thread is None: return
-            if self.mediaPlayer.thread._run_flag:
-                self.mediaPlayer.stop_video()
-            self.mediaPlayer.thread.run_one(1)
-        except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+            self.mediaPlayer.stop_video()
+        self.mediaPlayer.thread.run_one(1)
     
     def play(self,speed=1,direction=1):
-        ltxt='play {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            if self.mediaPlayer.thread is None: return
-            if self.mediaPlayer.thread._run_flag:
-                self.mediaPlayer.stop_video()
-            self.mediaPlayer.start_video(speed,direction)
-        except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+            self.mediaPlayer.stop_video()
+        self.mediaPlayer.start_video(speed,direction)
 
     def pause(self):
-        ltxt='pause {}'.format(self.mediaPlayer.thread.curr_frame)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-        try:
-            if self.mediaPlayer.thread is None: return
-            if self.mediaPlayer.thread._run_flag:
-                self.mediaPlayer.stop_video()  
-        except Exception as e:
-            self.logger.error("An error occurred", exc_info=True)
+        if self.mediaPlayer.thread is None: return
+        if self.mediaPlayer.thread._run_flag:
+           self.mediaPlayer.stop_video()  
         # print("# location 7", self.mediaPlayer.thread.curr_frame)
 
     def sliderPause(self):
@@ -958,18 +879,14 @@ def run(args):
     :att_file (Optionnal): attention file containing 3D data, if nothing is provided the 3D wigdet will just display the room
     :return: Nothing, the application ends when the GUI is closed
     """ 
-    try:
-        
-        # os.makedirs(user_path, exist_ok=True)
-        QtCore.QThread.currentThread().setObjectName('MainThread')
-        # logging.getLogger().setLevel(logging.DEBUG)
-        app = QApplication(sys.argv)
-        # args='test_string'
-        player = VideoWindow(args)
-        rate=10
-        player.resize(120*rate , (10)*rate)
-        player.show()
+    # os.makedirs(user_path, exist_ok=True)
+    QtCore.QThread.currentThread().setObjectName('MainThread')
+    logging.getLogger().setLevel(logging.DEBUG)
+    app = QApplication(sys.argv)
+    # args='test_string'
+    player = VideoWindow(args)
+    rate=10
+    player.resize(120*rate , (10)*rate)
+    player.show()
 
-        sys.exit(app.exec_())
-    except Exception as e:
-        logger.log(logging.ERROR, e, extra={'qThreadName': 'run'})
+    sys.exit(app.exec_())
