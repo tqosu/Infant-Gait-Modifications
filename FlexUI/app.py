@@ -79,7 +79,7 @@ class VideoWindow(QMainWindow):
     def str2sec(self,string1):
         a1,b1,c1,d1=string1.split(':')
         a,b,c,d=float(a1),float(b1),float(c1),float(d1)
-        abc=a*360+b*60+c+d/1000
+        abc=a*3600+b*60+c+d/1000
         return abc
   
     def user_combo_onActivated(self,text):
