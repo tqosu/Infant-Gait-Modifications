@@ -70,6 +70,11 @@ class VideoApp(QWidget):
     def clear_message(self, event):
         self.statusBar().clearMessage()
 
+    def serialize(self,obj):
+        if isinstance(obj, np.ndarray):
+            return [round(item, 2) if isinstance(item, (int, float)) else item for item in obj]
+        return obj
+
     def Box_Frame_Update(self):
         # curr_frame=self.mediaPlayer.thread.curr_frame-1
         # self.setPosition(self.mediaPlayer.thread.curr_frame)
@@ -93,6 +98,11 @@ class VideoApp(QWidget):
             if point is not None:
                 key1=keymap1[key]
                 myres['3dp'][key1]=point
+        # print(myres['3dp'],data[t]['3dp'])
+        data_string1 = '\nOLD :'+json.dumps(data[t]['3dp'], default=self.serialize) +'\n'
+        data_string2 = 'NEW :'+json.dumps(myres['3dp'], default=self.serialize)
+        numbers_as_string=data_string1+data_string2
+        self.logger.log(logging.DEBUG, numbers_as_string, extra={'qThreadName': ctname()})
         data[t]['3dp']=myres['3dp']
         # print("# location 6", self.thread.curr_frame)
         self.thread.run_one(0)
@@ -125,8 +135,9 @@ class VideoApp(QWidget):
         box[view_id]=myres['box'][view_id]
         midpoint[view_id]=myres['midpoint'][view_id]
         data[t]['box_s']=box_s
-        ltxt="Swap view {}".format(view_id+1)
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+        
+        numbers_as_string = 'Swapped Views '+''.join(str(num) for num in box_s)
+        self.logger.log(logging.DEBUG, numbers_as_string, extra={'qThreadName': ctname()})
         # print(self.thread.data[self.thread.curr_frame]['midpoint'])
         self.Box_Frame_Update()
         # self.thread.run_one(0)
@@ -197,10 +208,6 @@ class VideoApp(QWidget):
         second = position//self.thread.fps
         self.textLabel.setText("Time: {:.0f}:{:.0f} \t-\t Frame: {}".format(second//60, second % 60, position))
         self.last_position = position
-        self.reset_action_menu( 'box_r', self.parent.remove_menu.actions())
-        self.reset_action_menu( 'box_s', self.parent.swap_menu.actions())
-        
-        # print('location 1')
         return
 
     def update_last_image(self):
@@ -243,9 +250,6 @@ class VideoApp(QWidget):
         # print(qt_img.shape)
         self.image_label.setPixmap(qt_img)
     
-    # @pyqtSlot(np.ndarray)
-    # def update_image1(self, cv_img):
-    #     self.cv_img1=cv_img
 
     @pyqtSlot(int)
     def update_text(self, frame):

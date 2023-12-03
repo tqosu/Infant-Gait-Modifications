@@ -17,6 +17,7 @@ class VideoThread(QThread):
         self.curr_frame = 0
         self.fps = 1
         self.one2one=False
+        self.cv_img_mb={}
 
     # read video by filename
     def set_file(self, mydict):
@@ -50,6 +51,8 @@ class VideoThread(QThread):
         self.cap.set(1,self.curr_frame)
         self.cap_curr_frame=self.curr_frame
         self.data=mydict['data']
+        if self.cv_img_mb!={}:
+            del self.cv_img_mb
         self.cv_img_mb={}
         self.boxes_on=True
         # print(self.duration_on,self.duration_off)
@@ -94,7 +97,6 @@ class VideoThread(QThread):
                 if self.curr_frame<self.duration_on:
                     self.curr_frame=self.duration_on
                     break
-            
             if self.cap is None: break
             if self._run_flag:
                 if self.curr_frame in self.cv_img_mb:

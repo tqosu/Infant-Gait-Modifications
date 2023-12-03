@@ -26,6 +26,7 @@ import colorama
 from colorama import Fore, Style
 from io import StringIO
 colorama.init()
+import gc
 def ctname():
     return QtCore.QThread.currentThread().objectName()
 LEVELS = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
@@ -150,6 +151,7 @@ class VideoWindow(QMainWindow):
     # path2 change to user's when saving 
     # path1 is the offset doesn't matter
     def trnu_combo_onActivated(self,text):
+        gc.collect()
         self.viewMenu1.setEnabled(True)
         self.viewMenu2.setEnabled(True)
         self.viewMenu3.setEnabled(True)
@@ -647,6 +649,7 @@ class VideoWindow(QMainWindow):
             self.viewMenu3.addAction(self.viewAction3[i])
 
         self.remove_menu = menuBar.addMenu('Remove')
+        
         mystr='QWER'
         for i in range(4):
             # Create exit action
@@ -660,6 +663,7 @@ class VideoWindow(QMainWindow):
             action.triggered.connect(self.mediaPlayer.removeSelect)
             self.remove_menu.addAction(action)
 
+        self.remove_menu.aboutToShow.connect(lambda: self.mediaPlayer.reset_action_menu('box_r', self.remove_menu.actions()))
         self.swap_menu = menuBar.addMenu('Swap')
 
         for i in range(4):
@@ -672,6 +676,7 @@ class VideoWindow(QMainWindow):
             action.triggered.connect(self.mediaPlayer.swapSelect)
             self.swap_menu.addAction(action)
 
+        self.swap_menu.aboutToShow.connect(lambda: self.mediaPlayer.reset_action_menu('box_s', self.swap_menu.actions()))
 
         self.viewMenu1.setEnabled(False)
         self.viewMenu2.setEnabled(False)

@@ -33,6 +33,7 @@ class ResultApp(QWidget):
         # vbox.addWidget(self.textLabel, alignment=Qt.AlignBottom)
         # set the vbox layout as the widgets layout
         self.setLayout(vbox)
+        self.stack=[]
         
         # print(self.action_menu_aux)
     def adjust_window_size(self):
@@ -232,7 +233,11 @@ class ResultApp(QWidget):
             self.rate=rate
             self.radius=1*rate
         return img
-        
+    
+    def del_stack(self):
+        while len(self.stack)!=0:
+            op,self.data,self.position,self.img,self.img1,self.img2=self.stack.pop()
+            del self.data,self.position,self.img,self.img1,self.img2 
     def FindFrame(self,position_end,direction):
         # print(self.position+direction, position_end, direction)
         for position in range(self.position+direction, position_end, direction):
@@ -271,7 +276,7 @@ class ResultApp(QWidget):
         mydata={}
         mydata['data']=self.data
         np.save(self.mydict['path_data_sv'], mydata, allow_pickle=True)
-        self.stack=[]
+        self.del_stack()
 
     def RemoveAction(self):
         stackdata=['R',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
@@ -293,6 +298,7 @@ class ResultApp(QWidget):
     def UndoAction(self):
         # stackdata=self.stack.top()
         if len(self.stack)>0:
+            del self.data,self.position,self.img,self.img1,self.img2 
             op,self.data,self.position,self.img,self.img1,self.img2=self.stack.pop()
             return self.position
         return -1
@@ -311,7 +317,7 @@ class ResultApp(QWidget):
         # print(img.shape)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
-        self.stack=[]
+        self.del_stack()
         self.setWindowTitle("A Top-down View | {}".format(self.mydict['angle'])) 
 
 
