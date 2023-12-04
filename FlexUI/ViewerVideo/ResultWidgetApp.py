@@ -276,7 +276,7 @@ class ResultApp(QWidget):
         mydata={}
         mydata['data']=self.data
         np.save(self.mydict['path_data_sv'], mydata, allow_pickle=True)
-        self.del_stack()
+        # self.del_stack()
 
     def RemoveAction(self):
         stackdata=['R',copy.deepcopy(self.data),self.position,self.img,self.img1,self.img2]
@@ -306,6 +306,7 @@ class ResultApp(QWidget):
 
 
     def set_file(self,mydict):
+        self.del_stack()
         self.data=mydict['data']
 
         self.mydict=mydict
@@ -317,7 +318,7 @@ class ResultApp(QWidget):
         # print(img.shape)
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
-        self.del_stack()
+        
         self.setWindowTitle("A Top-down View | {}".format(self.mydict['angle'])) 
 
 
