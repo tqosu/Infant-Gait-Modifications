@@ -399,10 +399,24 @@ class VideoWindow(QMainWindow):
         self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
         try:
             self.sliderPause()
-            position=self.main3Dviewer.UndoAction()
+            # print("# location 1")
+            # print(self.main3Dviewer.data is self.mydict['data'])
+            # print(self.mediaPlayer.thread.data is self.mydict['data'])
+            position,data=self.main3Dviewer.UndoAction()
+            # print('# location 2')
+            # print(self.main3Dviewer.data is self.mydict['data'])
+            # print(self.mediaPlayer.thread.data is self.mydict['data'])
             if position!=-1:
-                self.setPosition(position)
-                self.mediaPlayer.showImage()    
+                del self.mydict['data']
+                self.mydict['data']=data
+                self.mediaPlayer.thread.data=data
+                # print('# location 3')
+                # print(self.main3Dviewer.data is self.mydict['data'])
+                # print(self.mediaPlayer.thread.data is self.mydict['data'])
+                
+                self.mediaPlayer.thread.curr_frame=position
+                self.mediaPlayer.thread.run_one(0)
+            assert self.mediaPlayer.thread.data is self.main3Dviewer.data, "data should have only one copy"
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
@@ -451,8 +465,8 @@ class VideoWindow(QMainWindow):
         try:
             self.sliderPause()
             position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_on-1,-1)
-            self.setPosition(position)
-            self.mediaPlayer.showImage()
+            self.mediaPlayer.thread.curr_frame=position
+            self.mediaPlayer.thread.run_one(0)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
     def NextAction(self):
@@ -461,8 +475,8 @@ class VideoWindow(QMainWindow):
         try:
             self.sliderPause()
             position = self.main3Dviewer.FindFrame(self.mediaPlayer.duration_off+1,1)
-            self.setPosition(position)
-            self.mediaPlayer.showImage()
+            self.mediaPlayer.thread.curr_frame=position
+            self.mediaPlayer.thread.run_one(0)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
     
@@ -472,9 +486,9 @@ class VideoWindow(QMainWindow):
         try:
             print("immediately takes you to the start of the trial")
             self.sliderPause()
-            # position = self.mediaPlayer.duration_on
-            self.setPosition(self.mediaPlayer.duration_on)
-            self.mediaPlayer.showImage()
+            position = self.mediaPlayer.duration_on
+            self.mediaPlayer.thread.curr_frame=position
+            self.mediaPlayer.thread.run_one(0)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 

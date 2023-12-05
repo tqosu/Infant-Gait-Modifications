@@ -250,7 +250,7 @@ class ResultApp(QWidget):
         return self.position
     
     def AddAction(self,key):
-        stackdata=['A',copy.deepcopy(self.data),self.position,self.img,copy.deepcopy(self.img1),self.img2]
+        stackdata=['A',copy.deepcopy(self.data),self.position,copy.deepcopy(self.img),copy.deepcopy(self.img1),copy.deepcopy(self.img2)]
         self.stack.append(stackdata)
         self.data[self.position][key]=self.data[self.position]['3dp'][key]
         self.setPosition1()
@@ -300,8 +300,8 @@ class ResultApp(QWidget):
         if len(self.stack)>0:
             del self.data,self.position,self.img,self.img1,self.img2 
             op,self.data,self.position,self.img,self.img1,self.img2=self.stack.pop()
-            return self.position
-        return -1
+            return self.position,self.data
+        return -1,None
 
 
 
@@ -369,6 +369,7 @@ class ResultApp(QWidget):
     # self.img1: view with steps - top
     # self.img2: view for each frame, with overlay - bottom
     def setPosition(self, position):
+        # print("# location 1")
         self.position=position
         thickness1=2
         overlay = self.img.copy()
@@ -379,7 +380,9 @@ class ResultApp(QWidget):
             self.setPosition1()
             for key in self.data[position]['3dp']:
             # print(k)
+
                 data1=self.data[position]['3dp'][key]
+                # print('#location 2',data1,key)
                 x,y,z=data1
                 # print(x,y,z)
                 y1,x1=self.gen_y(self.original_i+y)*self.rate,x*self.rate
@@ -401,6 +404,7 @@ class ResultApp(QWidget):
                     cur_key=key[0]
         alpha = 0.8  # Transparency factor.
         self.img = cv2.addWeighted(overlay, alpha, self.img, 1 - alpha, 0)
+        
         self.img2 =img1
         img=cv2.vconcat([self.img1,img1])
 
