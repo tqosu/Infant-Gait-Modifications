@@ -336,8 +336,8 @@ class VideoWindow(QMainWindow):
         self.ClearButton = QPushButton("&Clear", self)
         self.ClearButton.setEnabled(True)
         self.ClearButton.setIcon(QIcon('./icons/ClearButton.png'))
-        self.ClearButton.setShortcut(Qt.Key_2)
-        self.ClearButton.enterEvent=lambda event: self.show_message("Clear All Estimates | Key_2")
+        self.ClearButton.setShortcut(Qt.Key_Equal)
+        self.ClearButton.enterEvent=lambda event: self.show_message("Clear All Estimates | Key_Equal")
         self.ClearButton.leaveEvent = self.clear_message
         self.ClearButton.clicked.connect(self.ClearAction)
 
