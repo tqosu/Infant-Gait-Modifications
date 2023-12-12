@@ -262,6 +262,7 @@ class VideoWindow(QMainWindow):
         self.user_combo.addItem('Christina')
         self.user_combo.addItem('Eva')
         self.user_combo.addItem('Lily')
+        self.user_combo.addItem('Stuart')
         self.user_combo.addItem('Tieqiao')
         self.user_combo.addItem('Yasmine')
         # self.user_combo.addItem('Bob')
