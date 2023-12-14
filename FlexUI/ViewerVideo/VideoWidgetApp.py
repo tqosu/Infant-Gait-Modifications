@@ -124,6 +124,44 @@ class VideoApp(QWidget):
         # print("# location 6", self.thread.curr_frame)
         self.thread.run_one(0)
 
+    def Box_Frame_Update1(self):
+        curr_frame=self.thread.curr_frame
+        keymap0={'R':0, 'L':1}
+        keymap1={0:'R', 1:'L'}
+        myres={'box':defaultdict(dict),'poly':defaultdict(dict),\
+               'midpoint':defaultdict(dict),'3dp':{},'box_l':set()}
+        for view in range(4):
+            with open('FootBox/{}.json'.format(view), 'r') as file:
+                # Load JSON data from the file
+                data = json.load(file)
+            for instance in data['shapes']:
+                key=keymap0[instance['label']]
+                polygon_points=instance['points']
+                # print(polygon_points)
+                # break
+                x_coords, y_coords = zip(*polygon_points)
+
+                # Find the bounding box coordinates
+                min_x, max_x = min(x_coords), max(x_coords)
+                min_y, max_y = min(y_coords), max(y_coords)
+                center_x = (min_x + max_x) / 2
+                center_y = (min_y + max_y) / 2
+
+                # Bounding box points
+                bounding_box = np.array([min_x, min_y,max_x, max_y])
+                midpoint=np.array([center_x,center_y])
+                myres['box'][view][key]=bounding_box
+                myres['poly'][view][key]=polygon_points
+                # print(type(polygon_points))
+                myres['midpoint'][view][key]=midpoint
+        for key in range(2):
+            point=spoint(self.parent.cams,myres['midpoint'],key)
+            if point is not None:
+                key1=keymap1[key]
+                myres['3dp'][key1]=point
+        self.thread.data[curr_frame]=myres
+        self.thread.run_one(0)
+
     def swapSelect(self):
         ltxt='swapSelect {}'.format(self.thread.curr_frame)
         self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})

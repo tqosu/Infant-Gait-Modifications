@@ -5,6 +5,7 @@ import labelme
 
 from scipy.optimize import least_squares
 import cv2
+import logging
 def fun_rosenbrock(x,imgpoints,cams):
     residuals=[]
     for viewid in cams:
@@ -39,7 +40,7 @@ def get_depth(lst):
         return 1
     return 1 + max(get_depth(item) for item in lst)
 
-def to_labelme(mydict):
+def to_labelme(mydict,logger):
     img_path=mydict['img_path']
     im=mydict['im']
     data = labelme.LabelFile.load_image_file(img_path)
@@ -71,7 +72,9 @@ def to_labelme(mydict):
     one_img_json['shapes'] = shapes            
     json_output_filepath = img_path[:-4]+'.json'
 
-    print(json_output_filepath)
+    # json_output_filepath
+    ltxt=json_output_filepath
+    logger.log(logging.DEBUG, ltxt)
     with open(json_output_filepath, "w") as fp:
         json.dump(one_img_json, fp)
 

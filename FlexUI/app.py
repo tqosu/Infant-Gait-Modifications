@@ -119,6 +119,7 @@ class VideoWindow(QMainWindow):
 
         user_path='User/'+self.user_combo.currentText()+'/'
         os.makedirs(user_path, exist_ok=True)
+        os.makedirs('FootBox', exist_ok=True)
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
         if os.path.isfile(path3):
             self.dataframe3=pd.read_csv(path3)
@@ -128,7 +129,15 @@ class VideoWindow(QMainWindow):
                'bridge_l':float, 'bridge_r':float,'partial':bool}
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
-            
+        
+        path4='FootBox.csv'
+        if os.path.isfile(path4):
+            self.dataframe4=pd.read_csv(path4)
+            self.dataframe4=self.dataframe4.drop_duplicates()
+        else:
+            columns_with_dtypes={'subj': int, 'slope_or_bridge': str, 'total_trial_num':int, 'frame':int}
+            self.dataframe4=pd.DataFrame(columns=columns_with_dtypes)
+
         self.logger.log(logging.DEBUG, path3, extra={'qThreadName': ctname()})
         for _, row in self.dataframe2.iterrows():
             idx=row['total_trial_num']
@@ -497,7 +506,42 @@ class VideoWindow(QMainWindow):
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
-   
+    def Box_Frame_Action(self):
+        curr_frame=self.mediaPlayer.thread.curr_frame
+        insert_row=[self.mydict['subj'],self.mydict['slbr'],\
+               self.mydict['trnu'],curr_frame]
+        self.dataframe4.loc[len(self.dataframe4)] \
+            = insert_row
+        # print('Insert Row')
+        # print(insert_row)
+        # result_string = ''.join(map(str, insert_row))
+        ltxt='Box_Frame_Action '+ ''.join(map(str, insert_row))
+        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+
+        self.dataframe4.to_csv('FootBox.csv', index=False)
+        # print(self.mediaPlayer.thread.cv_img_mb.keys())
+        im=self.mediaPlayer.thread.cv_img_mb[curr_frame]
+        h,w,_=im.shape
+        h,w=int(h/2),int(w/2)
+        # cv2.imwrite('FootBox/x.png', im)
+        # im
+        for view in range(4):
+            if view==0:im1=im[:h,:w]
+            elif view==1:im1=im[:h,w:]
+            elif view==2:im1=im[h:,:w]
+            elif view==3:im1=im[h:,w:]
+            
+            mydict={}
+            mydict['save_path']='FootBox/'
+            mydict['img_path']=mydict['save_path']+'{}.png'.format(view)
+            mydict['im']=im1
+            mydict['polys']=[]
+            # img_path=
+            cv2.imwrite(mydict['img_path'], im1)
+            if view in self.mydict['data'][curr_frame]['poly']:
+                mydict['polys']=self.mydict['data'][curr_frame]['poly'][view]
+                # print(type(mydict['polys']))
+            to_labelme(mydict,self.logger)
     
     def SwapLR(self):
         ltxt='SwapLR {}'.format(self.mediaPlayer.thread.curr_frame)
@@ -651,6 +695,18 @@ class VideoWindow(QMainWindow):
         action.setShortcut(Qt.Key_B)
         action.setStatusTip("Boxes on and off")
         action.triggered.connect(self.Boxes_On)
+        self.viewAction3.append(action)
+
+        action = QAction('&Wrong Box Frame')        
+        action.setShortcut(Qt.Key_F)
+        action.setStatusTip("Wrong Box Frame | Key_F")
+        action.triggered.connect(self.Box_Frame_Action)
+        self.viewAction3.append(action)
+
+        action = QAction('&Box Frame Update Labelme')        
+        action.setShortcut(Qt.Key_U)
+        action.setStatusTip("Box Frame Update | Key_U")
+        action.triggered.connect(self.mediaPlayer.Box_Frame_Update1)
         self.viewAction3.append(action)
 
         action = QAction('&L <-> R')        
@@ -985,7 +1041,6 @@ def run(args):
     """ 
     try:
         
-        # os.makedirs(user_path, exist_ok=True)
         QtCore.QThread.currentThread().setObjectName('MainThread')
         # logging.getLogger().setLevel(logging.DEBUG)
         app = QApplication(sys.argv)
