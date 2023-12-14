@@ -1,3 +1,4 @@
+import yaml
 from email.policy import default
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDir, Qt
@@ -393,6 +394,8 @@ class VideoWindow(QMainWindow):
             self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
             self.update_trnu_combo(part)
             self.main3Dviewer.SaveAction()
+            if part==0:
+                self.TrialAction()
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
@@ -673,7 +676,11 @@ class VideoWindow(QMainWindow):
             action.setChecked(False)
             action.setStatusTip('Remove '+str(i+1))
             action.setData(i)
-            action.setShortcut(QKeySequence(Qt.ShiftModifier + getattr(Qt, f"Key_{mystr[i]}")))
+            # print(self.shortcuts['shortcuts']['remove_{}'.format(i)])
+            # shortcut = QShortcut(self.shortcuts['shortcuts']['remove_{}'.format(i)], self)
+            action.setShortcut(self.shortcuts['shortcuts']['remove_{}'.format(i)])
+            # action.setShortcut(QKeySequence(Qt.ShiftModifier + getattr(Qt, f"Key_{mystr[i]}")))
+            
             
             # action.setShortcut(Qt.Key_Plus)
             action.triggered.connect(self.mediaPlayer.removeSelect)
@@ -686,7 +693,9 @@ class VideoWindow(QMainWindow):
             # Create exit action
             action = QAction('&Swap View '+str(i+1), self, checkable=True)
             action.setChecked(False)
-            action.setShortcut(QKeySequence(getattr(Qt, f"Key_{mystr[i]}")))
+            # shortcut = QShortcut(self.shortcuts['shortcuts']['swap_{}'.format(i)], self)
+            action.setShortcut(self.shortcuts['shortcuts']['swap_{}'.format(i)])
+            # action.setShortcut(QKeySequence(getattr(Qt, f"Key_{mystr[i]}")))
             # action.setStatusTip('Swap view '+str(i+1))
             action.setData(i)
             action.triggered.connect(self.mediaPlayer.swapSelect)
@@ -734,7 +743,8 @@ class VideoWindow(QMainWindow):
     def __init__(self, args):
         super(VideoWindow, self).__init__()
 
-        
+        with open('default.yaml', 'r') as file:
+            self.shortcuts = yaml.safe_load(file)
         self.logger= logger
 
         self.mydict=defaultdict()

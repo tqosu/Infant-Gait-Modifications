@@ -1,0 +1,9 @@
+shortcuts:
+  swap_0: Q
+  swap_1: W
+  swap_2: E
+  swap_3: R
+  remove_0: Ctrl+Q
+  remove_1: Ctrl+W
+  remove_2: Ctrl+E
+  remove_3: Ctrl+R

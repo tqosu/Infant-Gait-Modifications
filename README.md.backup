@@ -27,7 +27,7 @@ pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph Py
 ```
 
 # Preparing the Data
-1. Download the data and save it on your local computer.
+1. Download the data from the [Flex](https://drive.google.com/drive/folders/1_sBEdKRCD9kbCbINUTYAecuz_H-ttwFB) google drive and save it on your local computer.
 
 2. Establish a symbolic link for the Flex data and substitute the existing empty Flex directory in the project using the guidance outlined in ./Flex/symlink.md.
 
