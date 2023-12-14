@@ -669,20 +669,13 @@ class VideoWindow(QMainWindow):
 
         self.remove_menu = menuBar.addMenu('Remove')
         
-        mystr='QWER'
         for i in range(4):
             # Create exit action
             action = QAction('&Remove '+str(i+1), self, checkable=True)
             action.setChecked(False)
             action.setStatusTip('Remove '+str(i+1))
             action.setData(i)
-            # print(self.shortcuts['shortcuts']['remove_{}'.format(i)])
-            # shortcut = QShortcut(self.shortcuts['shortcuts']['remove_{}'.format(i)], self)
             action.setShortcut(self.shortcuts['shortcuts']['remove_{}'.format(i)])
-            # action.setShortcut(QKeySequence(Qt.ShiftModifier + getattr(Qt, f"Key_{mystr[i]}")))
-            
-            
-            # action.setShortcut(Qt.Key_Plus)
             action.triggered.connect(self.mediaPlayer.removeSelect)
             self.remove_menu.addAction(action)
 
@@ -813,8 +806,9 @@ class VideoWindow(QMainWindow):
         self.playFrontButton = QPushButton()
         self.playFrontButton.setEnabled(False)
         # self.playFrontButton.setShortcut(Qt.Key_Right)
-        self.playFrontButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
-        self.playFrontButton.enterEvent=lambda event: self.show_message("5 Frame Forward")
+        # self.playFrontButton.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
+        self.playFrontButton.setIcon(QIcon('./icons/playFront15.png'))
+        self.playFrontButton.enterEvent=lambda event: self.show_message("15 Frame Forward")
         self.playFrontButton.leaveEvent = self.clear_message
         self.playFrontButton.clicked.connect(self.playfront)
 
@@ -853,7 +847,7 @@ class VideoWindow(QMainWindow):
         controlLayout.addWidget(self.playButton)
         controlLayout.addWidget(self.playButtonS)
         controlLayout.addWidget(self.playFrontButton1)
-        # controlLayout.addWidget(self.playFrontButton)
+        controlLayout.addWidget(self.playFrontButton)
         controlLayout.addWidget(self.positionSlider)
         
         controlLayout.addLayout(sceneBLayout)
@@ -918,7 +912,7 @@ class VideoWindow(QMainWindow):
         self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
         try:
             self.sliderPause()
-            position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 5)
+            position = min(self.mediaPlayer.duration_off, self.positionSlider.value() + 15)
             self.setPosition(position)
             self.mediaPlayer.showImage()
         except Exception as e:
