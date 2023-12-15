@@ -28,6 +28,23 @@ from colorama import Fore, Style
 from io import StringIO
 colorama.init()
 import gc
+
+import os
+import os.path as osp
+import sys
+import yaml
+
+# from qtpy import QtWidgets
+
+from labelme import __appname__
+from labelme import __version__
+from labelme.VideoWidgetApp import MainWindow
+from labelme.config import get_config
+from labelme.logger import logger
+from labelme.utils import newIcon
+
+
+
 def ctname():
     return QtCore.QThread.currentThread().objectName()
 LEVELS = (logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
@@ -119,7 +136,7 @@ class VideoWindow(QMainWindow):
 
         user_path='User/'+self.user_combo.currentText()+'/'
         os.makedirs(user_path, exist_ok=True)
-        os.makedirs('FootBox', exist_ok=True)
+        # os.makedirs('FootBox', exist_ok=True)
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
         if os.path.isfile(path3):
             self.dataframe3=pd.read_csv(path3)
@@ -130,13 +147,13 @@ class VideoWindow(QMainWindow):
             self.dataframe3=pd.DataFrame(columns=columns_with_dtypes)
             self.dataframe3.rename_axis('total_trial_num', inplace=True)
         
-        path4='FootBox.csv'
-        if os.path.isfile(path4):
-            self.dataframe4=pd.read_csv(path4)
-            self.dataframe4=self.dataframe4.drop_duplicates()
-        else:
-            columns_with_dtypes={'subj': int, 'slope_or_bridge': str, 'total_trial_num':int, 'frame':int}
-            self.dataframe4=pd.DataFrame(columns=columns_with_dtypes)
+        # path4='FootBox.csv'
+        # if os.path.isfile(path4):
+        #     self.dataframe4=pd.read_csv(path4)
+        #     self.dataframe4=self.dataframe4.drop_duplicates()
+        # else:
+        #     columns_with_dtypes={'subj': int, 'slope_or_bridge': str, 'total_trial_num':int, 'frame':int}
+        #     self.dataframe4=pd.DataFrame(columns=columns_with_dtypes)
 
         self.logger.log(logging.DEBUG, path3, extra={'qThreadName': ctname()})
         for _, row in self.dataframe2.iterrows():
@@ -403,8 +420,8 @@ class VideoWindow(QMainWindow):
             self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
             self.update_trnu_combo(part)
             self.main3Dviewer.SaveAction()
-            if part==0:
-                self.TrialAction()
+            # if part==0:
+            #     self.TrialAction()
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
@@ -506,42 +523,44 @@ class VideoWindow(QMainWindow):
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
-    def Box_Frame_Action(self):
-        curr_frame=self.mediaPlayer.thread.curr_frame
-        insert_row=[self.mydict['subj'],self.mydict['slbr'],\
-               self.mydict['trnu'],curr_frame]
-        self.dataframe4.loc[len(self.dataframe4)] \
-            = insert_row
-        # print('Insert Row')
-        # print(insert_row)
-        # result_string = ''.join(map(str, insert_row))
-        ltxt='Box_Frame_Action '+ ''.join(map(str, insert_row))
-        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+    # def Box_Frame_Action(self):
+    #     curr_frame=self.mediaPlayer.thread.curr_frame
+    #     insert_row=[self.mydict['subj'],self.mydict['slbr'],\
+    #            self.mydict['trnu'],curr_frame]
+    #     self.dataframe4.loc[len(self.dataframe4)] \
+    #         = insert_row
+    #     # print('Insert Row')
+    #     # print(insert_row)
+    #     # result_string = ''.join(map(str, insert_row))
+    #     ltxt='Box_Frame_Action '+ ''.join(map(str, insert_row))
+    #     self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
 
-        self.dataframe4.to_csv('FootBox.csv', index=False)
-        # print(self.mediaPlayer.thread.cv_img_mb.keys())
-        im=self.mediaPlayer.thread.cv_img_mb[curr_frame]
-        h,w,_=im.shape
-        h,w=int(h/2),int(w/2)
-        # cv2.imwrite('FootBox/x.png', im)
-        # im
-        for view in range(4):
-            if view==0:im1=im[:h,:w]
-            elif view==1:im1=im[:h,w:]
-            elif view==2:im1=im[h:,:w]
-            elif view==3:im1=im[h:,w:]
+    #     self.dataframe4.to_csv('FootBox.csv', index=False)
+    #     # print(self.mediaPlayer.thread.cv_img_mb.keys())
+    #     im=self.mediaPlayer.thread.cv_img_mb[curr_frame]
+    #     h,w,_=im.shape
+    #     h,w=int(h/2),int(w/2)
+    #     # cv2.imwrite('FootBox/x.png', im)
+    #     # im
+    #     datapath='FootBox/data.npy'
+    #     np.save(datapath, self.mydict['data'][curr_frame])
+    #     for view in range(4):
+    #         if view==0:im1=im[:h,:w]
+    #         elif view==1:im1=im[:h,w:]
+    #         elif view==2:im1=im[h:,:w]
+    #         elif view==3:im1=im[h:,w:]
             
-            mydict={}
-            mydict['save_path']='FootBox/'
-            mydict['img_path']=mydict['save_path']+'{}.png'.format(view)
-            mydict['im']=im1
-            mydict['polys']=[]
-            # img_path=
-            cv2.imwrite(mydict['img_path'], im1)
-            if view in self.mydict['data'][curr_frame]['poly']:
-                mydict['polys']=self.mydict['data'][curr_frame]['poly'][view]
-                # print(type(mydict['polys']))
-            to_labelme(mydict,self.logger)
+    #         mydict={}
+    #         mydict['save_path']='FootBox/'
+    #         mydict['img_path']=mydict['save_path']+'{}.png'.format(view)
+    #         mydict['im']=im1
+    #         mydict['polys']=[]
+    #         # img_path=
+    #         cv2.imwrite(mydict['img_path'], im1)
+    #         if view in self.mydict['data'][curr_frame]['poly']:
+    #             mydict['polys']=self.mydict['data'][curr_frame]['poly'][view]
+    #             # print(type(mydict['polys']))
+    #         to_labelme(mydict,self.logger)
     
     def SwapLR(self):
         ltxt='SwapLR {}'.format(self.mediaPlayer.thread.curr_frame)
@@ -550,13 +569,15 @@ class VideoWindow(QMainWindow):
             t=self.mediaPlayer.thread.curr_frame
             data=self.mediaPlayer.thread.data
             box=data[t]['box']
+            poly=data[t]['poly']
             midpoint=data[t]['midpoint']
             if 'box_s' in data[t]:
                 box_s=data[t]['box_s']
             else:
                 box_s=set()
             for view_id in box:
-                myres={'midpoint':defaultdict(dict),'box':defaultdict(dict)}
+                myres={'midpoint':defaultdict(dict),'poly':defaultdict(dict),\
+                       'box':defaultdict(dict)}
                 # box swap
                 if view_id in box_s:
                     box_s.remove(view_id)
@@ -565,8 +586,10 @@ class VideoWindow(QMainWindow):
                 for key in box[view_id]:
                     myres['midpoint'][view_id][1-key]=midpoint[view_id][key]
                     myres['box'][view_id][1-key]=box[view_id][key]
+                    myres['poly'][view_id][1-key]=poly[view_id][key]
                 box[view_id]=myres['box'][view_id]
                 midpoint[view_id]=myres['midpoint'][view_id]
+                poly[view_id]=myres['poly'][view_id]
             data[t]['box_s']=box_s
             print("Swap all views")
             self.mediaPlayer.Box_Frame_Update()
@@ -697,17 +720,17 @@ class VideoWindow(QMainWindow):
         action.triggered.connect(self.Boxes_On)
         self.viewAction3.append(action)
 
-        action = QAction('&Wrong Box Frame')        
-        action.setShortcut(Qt.Key_F)
-        action.setStatusTip("Wrong Box Frame | Key_F")
-        action.triggered.connect(self.Box_Frame_Action)
-        self.viewAction3.append(action)
+        # action = QAction('&Wrong Box Frame')        
+        # action.setShortcut(Qt.Key_F)
+        # action.setStatusTip("Wrong Box Frame | Key_F")
+        # action.triggered.connect(self.Box_Frame_Action)
+        # self.viewAction3.append(action)
 
-        action = QAction('&Box Frame Update Labelme')        
-        action.setShortcut(Qt.Key_U)
-        action.setStatusTip("Box Frame Update | Key_U")
-        action.triggered.connect(self.mediaPlayer.Box_Frame_Update1)
-        self.viewAction3.append(action)
+        # action = QAction('&Box Frame Update Labelme')        
+        # action.setShortcut(Qt.Key_U)
+        # action.setStatusTip("Box Frame Update | Key_U")
+        # action.triggered.connect(self.mediaPlayer.Box_Frame_Update1)
+        # self.viewAction3.append(action)
 
         action = QAction('&L <-> R')        
         action.setShortcut(Qt.Key_S)
@@ -806,7 +829,17 @@ class VideoWindow(QMainWindow):
         self.setWindowIcon(QIcon('./icons/baby-boy.png'))
         self.move(200, 100)
 
-        self.mediaPlayer = VideoApp(self)
+        config_file_or_yaml = 'default_config.yaml'
+        with open(config_file_or_yaml ) as f:
+            config = yaml.safe_load(f)
+        # self.labelme = MainWindow(
+        #     config,
+        #     self,
+        # )
+        # self.labelme.show()
+        # self.labelme.raise_()
+        # self.mediaPlayer = VideoApp(self)
+        self.mediaPlayer = MainWindow(config,self)
         self.mediaPlayer.frame_id.connect(self.setPosition)
         self.main3Dviewer = ResultApp(self)
         self.menu_init()
@@ -1039,17 +1072,17 @@ def run(args):
     :att_file (Optionnal): attention file containing 3D data, if nothing is provided the 3D wigdet will just display the room
     :return: Nothing, the application ends when the GUI is closed
     """ 
-    try:
+    # try:
         
-        QtCore.QThread.currentThread().setObjectName('MainThread')
-        # logging.getLogger().setLevel(logging.DEBUG)
-        app = QApplication(sys.argv)
-        # args='test_string'
-        player = VideoWindow(args)
-        rate=10
-        player.resize(120*rate , (10)*rate)
-        player.show()
+    QtCore.QThread.currentThread().setObjectName('MainThread')
+    # logging.getLogger().setLevel(logging.DEBUG)
+    app = QApplication(sys.argv)
+    # args='test_string'
+    player = VideoWindow(args)
+    rate=10
+    player.resize(120*rate , (10)*rate)
+    player.show()
 
-        sys.exit(app.exec_())
-    except Exception as e:
-        logger.log(logging.ERROR, e, extra={'qThreadName': 'run'})
+    sys.exit(app.exec_())
+    # except Exception as e:
+    #     logger.log(logging.ERROR, e, extra={'qThreadName': 'run'})

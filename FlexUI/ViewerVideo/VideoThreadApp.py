@@ -3,6 +3,8 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import numpy as np
 import cv2
 import time
+from FlexUI.app_helper import get_depth
+
 # from ..app_helper import camera
 
 class VideoThread(QThread):
@@ -128,21 +130,28 @@ class VideoThread(QThread):
         if self.cap is None or self.last_image is None: return
         self.change_pixmap_signal.emit(self.last_image)
         if emit_frame: self.frame_id.emit(self.curr_frame)
-    
+
     def box_img(self,cv_img):
-        if not self.boxes_on:return cv_img
+        if not self.boxes_on:
+            # print(self.boxes_on,self.shape)
+            self.shapes=[]
+            return cv_img
         h,w=self.h,self.w
         t=self.curr_frame
         # color = (0, 255, 0)
         color = [(0, 0, 255),(255, 0, 0)]
         thickness = 2
         # print(t)
+        shapes = []
+        RLdict={0:'R',1:'L'}
         if t in self.data:
             if 'box_r' in self.data[t]:
                 box_r=self.data[t]['box_r']
             else:
                 box_r=set()
-            for viewid in self.data[t]['box']:
+            # print("# location 1")
+            # print(self.data[t].keys())
+            for viewid in self.data[t]['poly']:
                 if viewid in box_r:continue
 
                 if viewid==0:
@@ -153,16 +162,31 @@ class VideoThread(QThread):
                     h,w=self.h,0
                 elif viewid==3:
                     h,w=self.h,self.w
+                polys=self.data[t]['poly'][viewid]
+                for key in polys:
+                    polygon2=polys[key]
+                    # polygon3=np.array(polygon2)
+                    if get_depth(polygon2)==2:
+                        polygon2=[polygon2]
+                    # polygon3=np.array(polygon2)
+                    # print(polygon2)
+        
+                    for one_polygon_points in polygon2:
+                        one_polygon_points1=np.array(one_polygon_points)+np.array([w,h])
+                        shapes.append(
+                            dict(
+                                label=RLdict[key],
+                                points=one_polygon_points1.tolist(),
+                                shape_type="polygon",
+                                flags= {},
+                                description=None,
+                                group_id=viewid,
+                                mask=None,
+                                other_data={},
+                            )
+                        )
+        self.shapes=shapes  
 
-                for key in self.data[t]['box'][viewid]:
-                    bt=self.data[t]['box'][viewid][key]
-                    # print(t,self.data[t]['box'])
-                    # print(bt)
-                    bt=bt.astype('int')
-                    start_point = (bt[0]+w,bt[1]+h)
-                    end_point = (bt[2]+w,bt[3]+h)
-
-                    cv_img=cv2.rectangle(cv_img, start_point, end_point, color[key], thickness)
         return cv_img
        
     def get_image(self, position, emit_frame=True):

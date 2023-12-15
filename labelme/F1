@@ -1,0 +1,5 @@
+
+cd /nfs/hpc/share/wangtie/2023/12/14a
+source /nfs/hpc/share/wangtie/2021/miniconda3/bin/activate
+conda activate myenv
+python __main__.py
