@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout, QLineEdit, 
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QAction, QRadioButton, QSplitter, QFrame, QCheckBox, QComboBox, qApp
 from PyQt5.QtGui import QIcon, QIntValidator,  QKeySequence
 
-import sys,json,os
+import sys,json,os,time
 # from DevEv1.Viewer3D.Viewer3DApp import View3D
 from FlexUI.ViewerVideo.VideoWidgetApp import VideoApp
 from FlexUI.ViewerVideo.ResultWidgetApp import ResultApp
@@ -420,8 +420,8 @@ class VideoWindow(QMainWindow):
             self.dataframe3.to_csv(self.mydict['path_csv'], index=True)
             self.update_trnu_combo(part)
             self.main3Dviewer.SaveAction()
-            # if part==0:
-            #     self.TrialAction()
+            if part==0:
+                self.TrialAction()
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
@@ -470,6 +470,7 @@ class VideoWindow(QMainWindow):
             self.trnu_combo.setCurrentIndex((index+1)%total)
             # print("# location 8")
             self.trnu_combo_onActivated(self.trnu_combo.currentText())
+            self.play(1,1)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
@@ -601,7 +602,9 @@ class VideoWindow(QMainWindow):
         ltxt='Boxes_On {}'.format(self.mediaPlayer.thread.curr_frame)
         self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
         try:
+            self.sliderPause()
             self.mediaPlayer.thread.boxes_on= not self.mediaPlayer.thread.boxes_on
+            self.mediaPlayer.thread.run_one(0)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 

@@ -20,6 +20,7 @@ class VideoThread(QThread):
         self.fps = 1
         self.one2one=False
         self.cv_img_mb={}
+        self.boxes_on=True
 
     # read video by filename
     def set_file(self, mydict):
@@ -56,9 +57,8 @@ class VideoThread(QThread):
         if self.cv_img_mb!={}:
             del self.cv_img_mb
         self.cv_img_mb={}
-        self.boxes_on=True
-        # print(self.duration_on,self.duration_off)
-        # self.duration = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        # self.boxes_on=True
+        
         return self.duration_on,self.duration_off, height_video, width_video
 
     def run_one(self,D):
