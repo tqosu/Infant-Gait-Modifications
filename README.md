@@ -23,7 +23,7 @@ __4. Install required python packages__ \
 4.2 open terminal with step 5
 
 ```
-pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph PyQt5 PyOpenGL trimesh pandas labelme colorama
+pip install numpy scipy matplotlib opencv-python-headless==4.5.5.62 pyqtgraph PyQt5 PyOpenGL trimesh pandas labelme colorama gdown scikit-image onnxruntime
 ```
 
 # Preparing the Data
