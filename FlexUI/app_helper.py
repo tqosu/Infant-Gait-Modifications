@@ -88,6 +88,7 @@ def camera(mydict):
     # print(data)
     # h,w,_=im.shape
     h,w=mydict['h'],mydict['w']
+    print(h,w)
     # 1. bridge 
     # front flip, center, corner, clock
 

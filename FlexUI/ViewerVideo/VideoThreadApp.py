@@ -21,6 +21,7 @@ class VideoThread(QThread):
         self.one2one=False
         self.cv_img_mb={}
         self.boxes_on=True
+        self.poly_on=True
 
     # read video by filename
     def set_file(self, mydict):
@@ -57,7 +58,6 @@ class VideoThread(QThread):
         if self.cv_img_mb!={}:
             del self.cv_img_mb
         self.cv_img_mb={}
-        # self.boxes_on=True
         
         return self.duration_on,self.duration_off, height_video, width_video
 
@@ -132,61 +132,93 @@ class VideoThread(QThread):
         if emit_frame: self.frame_id.emit(self.curr_frame)
 
     def box_img(self,cv_img):
-        if not self.boxes_on:
-            # print(self.boxes_on,self.shape)
-            self.shapes=[]
-            return cv_img
-        h,w=self.h,self.w
-        t=self.curr_frame
-        # color = (0, 255, 0)
-        color = [(0, 0, 255),(255, 0, 0)]
-        thickness = 2
-        # print(t)
-        shapes = []
-        RLdict={0:'R',1:'L'}
-        if t in self.data:
-            if 'box_r' in self.data[t]:
-                box_r=self.data[t]['box_r']
-            else:
-                box_r=set()
-            # print("# location 1")
-            # print(self.data[t].keys())
-            for viewid in self.data[t]['poly']:
-                if viewid in box_r:continue
+        if self.poly_on:
+            h,w=self.h,self.w
+            t=self.curr_frame
+            # color = (0, 255, 0)
+            color = [(0, 0, 255),(255, 0, 0)]
+            thickness = 2
+            # print(t)
+            shapes = []
+            RLdict={0:'R',1:'L'}
+            if t in self.data:
+                if 'box_r' in self.data[t]:
+                    box_r=self.data[t]['box_r']
+                else:
+                    box_r=set()
+                # print("# location 1")
+                # print(self.data[t].keys())
+                for viewid in self.data[t]['poly']:
+                    if viewid in box_r:continue
 
-                if viewid==0:
-                    h,w=0,0
-                elif viewid==1:
-                    h,w=0,self.w
-                elif viewid==2:
-                    h,w=self.h,0
-                elif viewid==3:
-                    h,w=self.h,self.w
-                polys=self.data[t]['poly'][viewid]
-                for key in polys:
-                    polygon2=polys[key]
-                    # polygon3=np.array(polygon2)
-                    if get_depth(polygon2)==2:
-                        polygon2=[polygon2]
-                    # polygon3=np.array(polygon2)
-                    # print(polygon2)
-        
-                    for one_polygon_points in polygon2:
-                        one_polygon_points1=np.array(one_polygon_points)+np.array([w,h])
-                        shapes.append(
-                            dict(
-                                label=RLdict[key],
-                                points=one_polygon_points1.tolist(),
-                                shape_type="polygon",
-                                flags= {},
-                                description=None,
-                                group_id=viewid,
-                                mask=None,
-                                other_data={},
+                    if viewid==0:
+                        h,w=0,0
+                    elif viewid==1:
+                        h,w=0,self.w
+                    elif viewid==2:
+                        h,w=self.h,0
+                    elif viewid==3:
+                        h,w=self.h,self.w
+                    polys=self.data[t]['poly'][viewid]
+                    for key in polys:
+                        polygon2=polys[key]
+                        # polygon3=np.array(polygon2)
+                        if get_depth(polygon2)==2:
+                            polygon2=[polygon2]
+                        # polygon3=np.array(polygon2)
+                        # print(polygon2)
+            
+                        for one_polygon_points in polygon2:
+                            one_polygon_points1=np.array(one_polygon_points)+np.array([w,h])
+                            shapes.append(
+                                dict(
+                                    label=RLdict[key],
+                                    points=one_polygon_points1.tolist(),
+                                    shape_type="polygon",
+                                    flags= {},
+                                    description=None,
+                                    group_id=viewid,
+                                    mask=None,
+                                    other_data={},
+                                )
                             )
-                        )
-        self.shapes=shapes  
+            self.shapes=shapes  
+        else:
+            self.shapes=[]
+            if self.boxes_on:
+                h,w=self.h,self.w
+                t=self.curr_frame
+                # color = (0, 255, 0)
+                color = [(0, 0, 255),(255, 0, 0)]
+                thickness = 2
+                # print(t)
+                if t in self.data:
+                    if 'box_r' in self.data[t]:
+                        box_r=self.data[t]['box_r']
+                    else:
+                        box_r=set()
+                    for viewid in self.data[t]['box']:
+                        if viewid in box_r:continue
 
+                        if viewid==0:
+                            h,w=0,0
+                        elif viewid==1:
+                            h,w=0,self.w
+                        elif viewid==2:
+                            h,w=self.h,0
+                        elif viewid==3:
+                            h,w=self.h,self.w
+
+                        for key in self.data[t]['box'][viewid]:
+                            bt=self.data[t]['box'][viewid][key]
+                            # print(t,self.data[t]['box'])
+                            # print(bt)
+                            bt=bt.astype('int')
+                            start_point = (bt[0]+w,bt[1]+h)
+                            end_point = (bt[2]+w,bt[3]+h)
+
+                            cv_img=cv2.rectangle(cv_img, start_point, end_point, color[key], thickness)
+        
         return cv_img
        
     def get_image(self, position, emit_frame=True):

@@ -287,6 +287,7 @@ class VideoWindow(QMainWindow):
         
         self.user_combo = QComboBox(self)
         self.user_combo.addItem('Christina')
+        self.user_combo.addItem('Christina1')
         self.user_combo.addItem('Eva')
         self.user_combo.addItem('Lily')
         self.user_combo.addItem('Stuart')
@@ -607,6 +608,15 @@ class VideoWindow(QMainWindow):
             self.mediaPlayer.thread.run_one(0)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+    def Poly_On(self):
+        ltxt='Poly_On {}'.format(self.mediaPlayer.thread.curr_frame)
+        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+        try:
+            self.sliderPause()
+            self.mediaPlayer.thread.poly_on= not self.mediaPlayer.thread.poly_on
+            self.mediaPlayer.thread.run_one(0)
+        except Exception as e:
+            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
     def RemoveAction(self):
         ltxt='RemoveAction {}'.format(self.mediaPlayer.thread.curr_frame)
@@ -723,6 +733,12 @@ class VideoWindow(QMainWindow):
         action.triggered.connect(self.Boxes_On)
         self.viewAction3.append(action)
 
+        action = QAction('&Polygons on and off | Key_P', self, checkable=True)      
+        action.setChecked(True)
+        action.setShortcut(Qt.Key_P)
+        action.setStatusTip("Boxes on and off")
+        action.triggered.connect(self.Poly_On)
+        self.viewAction3.append(action)
         # action = QAction('&Wrong Box Frame')        
         # action.setShortcut(Qt.Key_F)
         # action.setStatusTip("Wrong Box Frame | Key_F")
