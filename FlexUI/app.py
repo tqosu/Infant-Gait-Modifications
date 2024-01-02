@@ -422,7 +422,8 @@ class VideoWindow(QMainWindow):
             self.update_trnu_combo(part)
             self.main3Dviewer.SaveAction()
             if part==0:
-                self.TrialAction()
+                self.TrialButton.click()
+                # self.TrialAction()
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
@@ -471,7 +472,11 @@ class VideoWindow(QMainWindow):
             self.trnu_combo.setCurrentIndex((index+1)%total)
             # print("# location 8")
             self.trnu_combo_onActivated(self.trnu_combo.currentText())
-            self.play(1,1)
+            # self.playFrontButton1()
+            # self.playfront1()
+            # self.mediaPlayer.thread.run_one(0)
+            # self.mediaPlayer.showImage()
+            # self.play(1,1)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
 
