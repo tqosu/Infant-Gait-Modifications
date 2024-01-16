@@ -1,8 +1,8 @@
 import FlexUI
-
+import yaml
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--csv_name',default='Flex_1117.csv')
+parser.add_argument('--csv_name',default='Flex_240116.csv')
 args = parser.parse_args()
 
 def test_xjk():

@@ -108,7 +108,15 @@ class VideoWindow(QMainWindow):
 
     def subject_combo_onActivated(self,text):
         self.subj=text
-        int_subj=int(text[1:])
+        # print("# location 3")
+        # print(self.subj)
+        int_subj=text[1:]
+        subjs=int_subj.split('_')
+        if len(subjs)>1:
+            self.subj0,self.subj1=subjs[0],'_'+subjs[1]
+        else:
+            self.subj0,self.subj1=subjs[0],''
+        self.subj0=int(self.subj0)
         self.dataframe1=self.dataframe.loc[self.dataframe['subj']==int_subj]
         
         set_a=set(self.dataframe1['slope_or_bridge'].tolist())
@@ -121,10 +129,14 @@ class VideoWindow(QMainWindow):
                 self.slbr_combo.addItem('Gaps')
             else:
                 self.slbr_combo.addItem('Bridge')
+        # print(set_a)
         self.slope_or_bridge=self.slbr_combo.currentText()
         self.slbr_combo_onActivated(self.slope_or_bridge)
 
     def slbr_combo_onActivated(self,text):
+        print('# location 2')
+        print(self.subj)
+        print(text)
         self.slope_or_bridge=text[0].lower()
         self.dataframe2=self.dataframe1.loc[self.dataframe1['slope_or_bridge']==self.slope_or_bridge]
         
@@ -132,7 +144,7 @@ class VideoWindow(QMainWindow):
         self.trnu_combo.clear()
         slbr=self.slbr_combo.currentText()
 
-        info=[self.subj,'',slbr]
+        info=[self.subj.split('_')[0],'',slbr]
 
         user_path='User/'+self.user_combo.currentText()+'/'
         os.makedirs(user_path, exist_ok=True)
@@ -191,13 +203,19 @@ class VideoWindow(QMainWindow):
         text=text[1:].split(' | ')[0]
         slbr=self.slbr_combo.currentText()
         # self.slbr_combo_onActivated(slbr)
-        info=[self.subj,'',slbr]
+        info=[self.subj.split('_')[0],'',slbr]
 
-        fileName = './Flex/dataset3/2021_Flex1_{}_{}_MCH.mp4'.format(info[0],info[2])
-        fileName1 = './Flex/dataset/2021_Flex1_{}_SlopeProtractor.mp4'.format(info[0])
+        
+        fileName = './Flex/dataset3/2021_Flex1_{}_{}_MCH{}.mp4'.format(info[0],info[2],self.subj1)
+        path1='./Flex/sync/2021_Flex1_{}_{}_MCH{}.json'.format(info[0],info[2],self.subj1)
+        print("# location 3 ")
+        print(fileName)
+        print(path1)
+        print(self.subj1)
+        # fileName1 = './Flex/dataset/2021_Flex1_{}_SlopeProtractor.mp4'.format(info[0])
 
         # mixed view offset
-        path1='./Flex/sync/2021_Flex1_{}_{}_MCH.json'.format(info[0],info[2])
+        # path1='./Flex/sync/2021_Flex1_{}_{}_MCH.json'.format(info[0],info[2])
         # level = random.choice(LEVELS)
     
         
@@ -205,7 +223,7 @@ class VideoWindow(QMainWindow):
             data1 = json.load(f)
         offset=data1['start_time_seconds']
 
-        pathdata='2021_Flex1_{}_{}_MCH-{}.npy'.format(info[0],info[2],text)
+        pathdata='2021_Flex1_{}_{}_MCH{}-{}.npy'.format(info[0],info[2],self.subj1,text)
         path2='./Flex/box6_5/'+pathdata
         path2sv=user_path+pathdata
         self.logger.log(logging.DEBUG, path2, extra={'qThreadName': ctname()})
@@ -233,7 +251,7 @@ class VideoWindow(QMainWindow):
                 break
         
         if info[2]=='Bridge':
-            bridge_json='./Flex/bridge_boundary/2021_Flex1_{}_{}_MCH-{}.json'.format(info[0],info[2],int(text))
+            bridge_json='./Flex/bridge_boundary/2021_Flex1_{}_{}_MCH{}-{}.json'.format(info[0],info[2],self.subj1,int(text))
             with open(bridge_json) as f:
                 data1 = json.load(f)
                 self.mydict['x1']=data1['x1']
@@ -244,7 +262,7 @@ class VideoWindow(QMainWindow):
         off=self.str2sec(off)-offset
 
         self.mydict['filename']=fileName
-        self.mydict['filename1']=fileName1
+        # self.mydict['filename1']=fileName1
         self.mydict['on']=on
         self.mydict['off']=off
         self.mydict['data']=data
@@ -302,6 +320,9 @@ class VideoWindow(QMainWindow):
         # for i in range(10):
         set_a=set(self.dataframe['subj'].tolist())
         lst_a=sorted(set_a)
+        # print("# location 1")
+        # print(lst_a)
+        # return 
         for subj in lst_a:
             self.subject_combo.addItem('S'+str(subj))
         self.subject_combo.textActivated[str].connect(self.subject_combo_onActivated)
@@ -529,45 +550,6 @@ class VideoWindow(QMainWindow):
             self.mediaPlayer.thread.run_one(0)
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
-
-    # def Box_Frame_Action(self):
-    #     curr_frame=self.mediaPlayer.thread.curr_frame
-    #     insert_row=[self.mydict['subj'],self.mydict['slbr'],\
-    #            self.mydict['trnu'],curr_frame]
-    #     self.dataframe4.loc[len(self.dataframe4)] \
-    #         = insert_row
-    #     # print('Insert Row')
-    #     # print(insert_row)
-    #     # result_string = ''.join(map(str, insert_row))
-    #     ltxt='Box_Frame_Action '+ ''.join(map(str, insert_row))
-    #     self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
-
-    #     self.dataframe4.to_csv('FootBox.csv', index=False)
-    #     # print(self.mediaPlayer.thread.cv_img_mb.keys())
-    #     im=self.mediaPlayer.thread.cv_img_mb[curr_frame]
-    #     h,w,_=im.shape
-    #     h,w=int(h/2),int(w/2)
-    #     # cv2.imwrite('FootBox/x.png', im)
-    #     # im
-    #     datapath='FootBox/data.npy'
-    #     np.save(datapath, self.mydict['data'][curr_frame])
-    #     for view in range(4):
-    #         if view==0:im1=im[:h,:w]
-    #         elif view==1:im1=im[:h,w:]
-    #         elif view==2:im1=im[h:,:w]
-    #         elif view==3:im1=im[h:,w:]
-            
-    #         mydict={}
-    #         mydict['save_path']='FootBox/'
-    #         mydict['img_path']=mydict['save_path']+'{}.png'.format(view)
-    #         mydict['im']=im1
-    #         mydict['polys']=[]
-    #         # img_path=
-    #         cv2.imwrite(mydict['img_path'], im1)
-    #         if view in self.mydict['data'][curr_frame]['poly']:
-    #             mydict['polys']=self.mydict['data'][curr_frame]['poly'][view]
-    #             # print(type(mydict['polys']))
-    #         to_labelme(mydict,self.logger)
     
     def SwapLR(self):
         ltxt='SwapLR {}'.format(self.mediaPlayer.thread.curr_frame)

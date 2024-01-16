@@ -30,9 +30,9 @@ class VideoThread(QThread):
         self.filename = mydict['filename']
         self.cap = cv2.VideoCapture(self.filename)
         self.slbr=mydict['slbr']
-        if self.slbr=='Slope':
-            self.filename1 = mydict['filename1']
-            self.cap1 = cv2.VideoCapture(self.filename1)
+        # if self.slbr=='Slope':
+            # self.filename1 = mydict['filename1']
+            # self.cap1 = cv2.VideoCapture(self.filename1)
         self.last_image = None
         self._run_flag = False
         self.position_flag = None
