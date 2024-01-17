@@ -146,7 +146,7 @@ class VideoWindow(QMainWindow):
 
         info=[self.subj.split('_')[0],'',slbr]
 
-        user_path='User/'+self.user_combo.currentText()+'/'
+        user_path='User/{}/{}/'.format(self.user_combo.currentText(),info[0])
         os.makedirs(user_path, exist_ok=True)
         # os.makedirs('FootBox', exist_ok=True)
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
@@ -197,40 +197,32 @@ class VideoWindow(QMainWindow):
         self.remove_menu.setEnabled(True)
         self.swap_menu.setEnabled(True)
         
-        
-        user_path='User/'+self.user_combo.currentText()+'/'
 
         text=text[1:].split(' | ')[0]
         slbr=self.slbr_combo.currentText()
         # self.slbr_combo_onActivated(slbr)
         info=[self.subj.split('_')[0],'',slbr]
 
+        user_path='User/{}/{}/'.format(self.user_combo.currentText(),info[0])
         
         fileName = './Flex/dataset3/2021_Flex1_{}_{}_MCH{}.mp4'.format(info[0],info[2],self.subj1)
         path1='./Flex/sync/2021_Flex1_{}_{}_MCH{}.json'.format(info[0],info[2],self.subj1)
-        print("# location 3 ")
-        print(fileName)
-        print(path1)
-        print(self.subj1)
-        # fileName1 = './Flex/dataset/2021_Flex1_{}_SlopeProtractor.mp4'.format(info[0])
-
-        # mixed view offset
-        # path1='./Flex/sync/2021_Flex1_{}_{}_MCH.json'.format(info[0],info[2])
-        # level = random.choice(LEVELS)
-    
         
         with open(path1) as f:
             data1 = json.load(f)
         offset=data1['start_time_seconds']
 
         pathdata='2021_Flex1_{}_{}_MCH{}-{}.npy'.format(info[0],info[2],self.subj1,text)
-        path2='./Flex/box6_5/'+pathdata
+        path2='./Flex/box6_5/{}/'.format(info[0])+pathdata
         path2sv=user_path+pathdata
         self.logger.log(logging.DEBUG, path2, extra={'qThreadName': ctname()})
         
         os.makedirs(user_path, exist_ok=True)
 
         path3=user_path+'2021_Flex1_{}_{}_MCH.csv'.format(info[0],info[2])
+        print("# location 1")
+        print(path3)
+
     # try:
         data=np.load(path2, allow_pickle=True)
         # except:
