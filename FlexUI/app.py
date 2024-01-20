@@ -207,10 +207,20 @@ class VideoWindow(QMainWindow):
         
         fileName = './Flex/dataset3/2021_Flex1_{}_{}_MCH{}.mp4'.format(info[0],info[2],self.subj1)
         path1='./Flex/sync/2021_Flex1_{}_{}_MCH{}.json'.format(info[0],info[2],self.subj1)
+        path_sync2='./Flex/sync2/2021_Flex1_{}_{}_MCH{}/data1.json'.format(info[0],info[2],self.subj1)
+        with open(path_sync2) as f:
+            data1 = json.load(f)
+            offset2=[data1[str(i)] for i in range(4)]
         
         with open(path1) as f:
             data1 = json.load(f)
         offset=data1['start_time_seconds']
+        # print(offset,offset2)
+        # if slbr[0]=='S':
+        #     offset-=offset2[0]
+        # print('#location 1')
+        # print(slbr)
+        
 
         pathdata='2021_Flex1_{}_{}_MCH{}-{}.npy'.format(info[0],info[2],self.subj1,text)
         path2='./Flex/box6_5/{}/'.format(info[0])+pathdata
@@ -252,9 +262,11 @@ class VideoWindow(QMainWindow):
         
         on=self.str2sec(on)-offset
         off=self.str2sec(off)-offset
+        
 
         self.mydict['filename']=fileName
         # self.mydict['filename1']=fileName1
+        self.mydict['offset2']=offset2
         self.mydict['on']=on
         self.mydict['off']=off
         self.mydict['data']=data

@@ -39,6 +39,7 @@ class VideoThread(QThread):
         width_video = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height_video = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.h,self.w=int(height_video/2),int(width_video/2)
+        
         mydict['h'],mydict['w']=self.h,self.w
         # self.camera=camera(mydict)
         # print(self.h,self.w)
@@ -47,8 +48,14 @@ class VideoThread(QThread):
         # print('fps: {}'.format(self.fps))
         self.S=1
         self.D=1
-        self.duration_on= int(self.fps*mydict['on'])
-        self.duration_off= int(self.fps*mydict['off']) 
+        if self.slbr=='Slope':
+            offset=mydict['offset2'][0]
+        else:
+            offset=mydict['offset2'][3]
+        self.duration_on= int(self.fps*mydict['on'])-offset
+        self.duration_off= int(self.fps*mydict['off'])-offset
+        # print(mydict['offset2'])
+        # print(self.duration_on,self.duration_off)
         # print(self.duration_on,self.duration_off)
         self.curr_frame = self.duration_on
         # print(self.curr_frame)
