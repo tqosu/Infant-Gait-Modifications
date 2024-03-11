@@ -225,7 +225,7 @@ class VideoWindow(QMainWindow):
 
         pathdata='2021_Flex1_{}_{}_MCH{}-{}.npy'.format(info[0],info[2],self.subj1,text)
         # path2='./Flex/box6_5/{}/'.format(info[0])+pathdata
-        path2='./Flex/box7_1/{}/'.format(info[0])+pathdata
+        path2='./Flex/box7_2/{}/'.format(info[0])+pathdata
         path2sv=user_path+pathdata
         self.logger.log(logging.DEBUG, path2, extra={'qThreadName': ctname()})
         

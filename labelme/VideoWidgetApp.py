@@ -53,7 +53,11 @@ import cv2
 
 # TODO(unknown):
 # - Zoom is too "steppy".
-
+def calculate_distance(a, b):
+    x1,y1=a
+    x2,y2=b
+    distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    return distance
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -140,44 +144,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # print("# location 6", self.thread.curr_frame)
         self.thread.run_one(0)
 
-    # def Box_Frame_Update1(self):
-    #     curr_frame=self.thread.curr_frame
-    #     keymap0={'R':0, 'L':1}
-    #     keymap1={0:'R', 1:'L'}
-    #     myres={'box':defaultdict(dict),'poly':defaultdict(dict),\
-    #            'midpoint':defaultdict(dict),'3dp':{},'box_l':set()}
-    #     for view in range(4):
-    #         with open('FootBox/{}.json'.format(view), 'r') as file:
-    #             # Load JSON data from the file
-    #             data = json.load(file)
-    #         for instance in data['shapes']:
-    #             key=keymap0[instance['label']]
-    #             polygon_points=instance['points']
-    #             # print(polygon_points)
-    #             # break
-    #             x_coords, y_coords = zip(*polygon_points)
-
-    #             # Find the bounding box coordinates
-    #             min_x, max_x = min(x_coords), max(x_coords)
-    #             min_y, max_y = min(y_coords), max(y_coords)
-    #             center_x = (min_x + max_x) / 2
-    #             center_y = (min_y + max_y) / 2
-
-    #             # Bounding box points
-    #             bounding_box = np.array([min_x, min_y,max_x, max_y])
-    #             midpoint=np.array([center_x,center_y])
-    #             myres['box'][view][key]=bounding_box
-    #             myres['poly'][view][key]=polygon_points
-    #             # print(type(polygon_points))
-    #             myres['midpoint'][view][key]=midpoint
-    #     for key in range(2):
-    #         point=spoint(self.parent.cams,myres['midpoint'],key)
-    #         if point is not None:
-    #             key1=keymap1[key]
-    #             myres['3dp'][key1]=point
-    #     self.thread.data[curr_frame]=myres
-    #     self.thread.run_one(0)
-
     def swapSelect(self):
         ltxt='swapSelect {}'.format(self.thread.curr_frame)
         self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
@@ -201,7 +167,14 @@ class MainWindow(QtWidgets.QMainWindow):
             box_s.remove(view_id)
         else:
             box_s.add(view_id)
+        if self.thread.curr_frame==25853:
+            print(poly[view_id].keys())
+            print(myres['poly'][view_id].keys())
+            print(box[view_id].keys())
+            print(type(poly[view_id]),type(myres['poly'][view_id]))
+
         for key in box[view_id]:
+            
             myres['midpoint'][view_id][1-key]=midpoint[view_id][key]
             myres['box'][view_id][1-key]=box[view_id][key]
             myres['poly'][view_id][1-key]=poly[view_id][key]
@@ -1628,11 +1601,30 @@ class MainWindow(QtWidgets.QMainWindow):
             myres['poly'][view][key]=polygon_points
             # print(type(polygon_points))
             myres['midpoint'][view][key]=midpoint
+        
         for key in range(2):
             point=spoint(self.parent.cams,myres['midpoint'],key)
             if point is not None:
                 key1=keymap1[key]
                 myres['3dp'][key1]=point
+        print("# box_l")
+        # print(self.thread.data[curr_frame].keys(),myres.keys())
+        for key in ['box_l','box_r','box_s']:
+            if key in self.thread.data[curr_frame]:
+                myres[key]=self.thread.data[curr_frame][key]
+        for view in self.parent.cams.keys():
+            if view in myres['box_l']:continue
+            dist=0
+            for key in myres['midpoint'][view]:
+                if key not in self.thread.data[curr_frame]['midpoint'][view]:
+                    myres['box_l'].add(view)
+                    break
+                dist+=calculate_distance(self.thread.data[curr_frame]['midpoint'][view][key],myres['midpoint'][view][key])
+            if dist>5:
+                myres['box_l'].add(view)
+        #     print(self.thread.data[curr_frame]['midpoint'][view],myres['midpoint'][view])
+        # print(myres['box_l'])
+
         self.thread.data[curr_frame]=myres
         self.thread.run_one(0)
 
