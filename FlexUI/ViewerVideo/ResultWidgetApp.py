@@ -330,6 +330,18 @@ class ResultApp(QWidget):
         qt_img = self.convert_cv_qt(img)
         self.image_label.setPixmap(qt_img)
     
+    def preset(self):
+        self.reset()
+        timestamps=[]
+        for t in self.data:
+            for key in ['R','L']:
+                if key in self.data[t]:
+                    timestamps.append(t)
+        tmin,tmax=min(timestamps),max(timestamps)
+        for position in range(tmin,tmax):
+            self.setPosition(position)
+
+
     def gen_y(self,y):
         if self.slbr[0]=='B' or self.slbr[0]=='G':return y
         else:

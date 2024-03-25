@@ -41,8 +41,6 @@ class VideoThread(QThread):
         self.h,self.w=int(height_video/2),int(width_video/2)
         
         mydict['h'],mydict['w']=self.h,self.w
-        # self.camera=camera(mydict)
-        # print(self.h,self.w)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
 
         # print('fps: {}'.format(self.fps))
@@ -54,14 +52,14 @@ class VideoThread(QThread):
             offset=mydict['offset2'][3]
         self.duration_on= int(self.fps*mydict['on'])-offset
         self.duration_off= int(self.fps*mydict['off'])-offset
-        # print(mydict['offset2'])
-        # print(self.duration_on,self.duration_off)
-        # print(self.duration_on,self.duration_off)
         self.curr_frame = self.duration_on
-        # print(self.curr_frame)
         self.cap.set(1,self.curr_frame)
         self.cap_curr_frame=self.curr_frame
         self.data=mydict['data']
+        # print("# location 1")
+        # mydetects=self.data
+        # for t in mydetects:
+        #     print(t,type(mydetects[t]['poly']))
         if self.cv_img_mb!={}:
             del self.cv_img_mb
         self.cv_img_mb={}
@@ -139,6 +137,10 @@ class VideoThread(QThread):
         if emit_frame: self.frame_id.emit(self.curr_frame)
 
     def box_img(self,cv_img):
+        # print("# location 1")
+        # mydetects=self.data
+        # for t in mydetects:
+        #     print(t,type(mydetects[t]['poly']))
         if self.poly_on:
             h,w=self.h,self.w
             t=self.curr_frame
@@ -167,6 +169,8 @@ class VideoThread(QThread):
                     elif viewid==3:
                         h,w=self.h,self.w
                     polys=self.data[t]['poly'][viewid]
+                    # print(t,polys)
+                    # print(polys.keys())
                     for key in polys:
                         polygon2=polys[key]
                         # polygon3=np.array(polygon2)

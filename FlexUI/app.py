@@ -310,8 +310,8 @@ class VideoWindow(QMainWindow):
         # self.dataframe=pd.read_csv('Flex_1023.csv')
         
         self.user_combo = QComboBox(self)
-        self.user_combo.addItem('Christina')
         self.user_combo.addItem('Christina1')
+        self.user_combo.addItem('Christina')
         self.user_combo.addItem('Eva')
         self.user_combo.addItem('Lily')
         self.user_combo.addItem('Makayla')
@@ -489,6 +489,16 @@ class VideoWindow(QMainWindow):
             ltxt='reset3D {}'.format(self.mediaPlayer.thread.curr_frame)
             self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
             self.main3Dviewer.reset()
+        except Exception as e:
+            self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
+    
+    def preset3D(self):
+        ltxt='preset3D {}'.format(self.mediaPlayer.thread.curr_frame)
+        self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+        try:
+            ltxt='preset3D {}'.format(self.mediaPlayer.thread.curr_frame)
+            self.logger.log(logging.DEBUG, ltxt, extra={'qThreadName': ctname()})
+            self.main3Dviewer.preset()
         except Exception as e:
             self.logger.log(logging.ERROR, e, extra={'qThreadName': ctname()})
     
@@ -929,7 +939,7 @@ class VideoWindow(QMainWindow):
         self.positionSlider.sliderMoved.connect(self.setPosition)
         self.positionSlider.sliderReleased.connect(self.setImageSlider)
 
-        self.resetButton = QPushButton("&Reset View", self)
+        self.resetButton = QPushButton("&R", self)
         self.resetButton.setEnabled(True)
         self.resetButton.setShortcut(Qt.Key_Space)
         self.resetButton.enterEvent=lambda event: self.show_message("Top-down View Reset | Key_Space")
@@ -937,8 +947,17 @@ class VideoWindow(QMainWindow):
         self.resetButton.setIcon(QIcon('./icons/resetButton.png'))
         self.resetButton.clicked.connect(self.reset3D)
 
-        sceneBLayout = QVBoxLayout()
+        self.presetButton = QPushButton("&P", self)
+        self.presetButton.setEnabled(True)
+        self.presetButton.setShortcut(QKeySequence(Qt.CTRL + Qt.Key_Space))
+        self.presetButton.enterEvent=lambda event: self.show_message("Top-down View Preset | Ctrl + Key_Space")
+        self.presetButton.leaveEvent = self.clear_message
+        self.presetButton.setIcon(QIcon('./icons/presetButton.png'))
+        self.presetButton.clicked.connect(self.preset3D)
+
+        sceneBLayout = QHBoxLayout()
         sceneBLayout.addWidget(self.resetButton)
+        sceneBLayout.addWidget(self.presetButton)
         # sceneBLayout.addWidget(self.clearRoomButton)
 
         controlLayout = QHBoxLayout()

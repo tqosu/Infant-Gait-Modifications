@@ -1622,9 +1622,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 dist+=calculate_distance(self.thread.data[curr_frame]['midpoint'][view][key],myres['midpoint'][view][key])
             if dist>5:
                 myres['box_l'].add(view)
-        #     print(self.thread.data[curr_frame]['midpoint'][view],myres['midpoint'][view])
-        # print(myres['box_l'])
 
+        for key in ['L','R']:
+            if key in self.thread.data[curr_frame]:
+                myres[key]=myres['3dp'][key]
         self.thread.data[curr_frame]=myres
         self.thread.run_one(0)
 

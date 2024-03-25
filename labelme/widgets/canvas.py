@@ -1000,14 +1000,15 @@ class Canvas(QtWidgets.QWidget):
             elif modifiers == QtCore.Qt.AltModifier:
                 self.snapping = False
         elif self.editing():
-            if key == QtCore.Qt.Key_Up:
-                self.moveByKeyboard(QtCore.QPointF(0.0, -MOVE_SPEED))
-            elif key == QtCore.Qt.Key_Down:
-                self.moveByKeyboard(QtCore.QPointF(0.0, MOVE_SPEED))
-            elif key == QtCore.Qt.Key_Left:
-                self.moveByKeyboard(QtCore.QPointF(-MOVE_SPEED, 0.0))
-            elif key == QtCore.Qt.Key_Right:
-                self.moveByKeyboard(QtCore.QPointF(MOVE_SPEED, 0.0))
+            pass
+            # if key == QtCore.Qt.Key_Up:
+            #     self.moveByKeyboard(QtCore.QPointF(0.0, -MOVE_SPEED))
+            # elif key == QtCore.Qt.Key_Down:
+            #     self.moveByKeyboard(QtCore.QPointF(0.0, MOVE_SPEED))
+            # elif key == QtCore.Qt.Key_Left:
+            #     self.moveByKeyboard(QtCore.QPointF(-MOVE_SPEED, 0.0))
+            # elif key == QtCore.Qt.Key_Right:
+            #     self.moveByKeyboard(QtCore.QPointF(MOVE_SPEED, 0.0))
 
     def keyReleaseEvent(self, ev):
         modifiers = ev.modifiers()
